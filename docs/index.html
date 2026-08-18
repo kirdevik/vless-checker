@@ -4,15 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kirdevik VLESS Checker PRO</title>
-  <meta name="description" content="Бесплатные VLESS-ключи из 40+ источников. 15 стран." />
+  <meta name="description" content="Бесплатные VLESS-ключи из 40+ источников. 29 стран." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔑</text></svg>" />
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="styles.css" />
+  <!-- Leaflet CSS для карты -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
   <div class="container">
 
-    <!-- ===== БРЕНД ===== -->
     <div class="brand">
       <h1 class="brand-title">
         <span class="brand-name">Kirdevik</span>
@@ -31,7 +33,7 @@
       <p class="subtitle" id="updated">Загружаем данные...</p>
     </header>
 
-    <!-- ===== РАСШИРЕННАЯ СТАТИСТИКА ===== -->
+    <!-- СТАТИСТИКА -->
     <div class="stats-bar">
       <div class="stat-item">
         <span class="stat-value" id="total-sources">0</span>
@@ -47,7 +49,7 @@
       </div>
       <div class="stat-item">
         <span class="stat-value" id="success-rate">0%</span>
-        <span class="stat-label">Процент рабочих (1.6)</span>
+        <span class="stat-label">Процент рабочих</span>
       </div>
       <div class="stat-item">
         <span class="stat-value" id="avg-speed">0</span>
@@ -59,9 +61,9 @@
       </div>
     </div>
 
-    <!-- ===== ГРАФИК (1.1) ===== -->
+    <!-- ГРАФИК -->
     <div class="chart-container">
-      <h3 class="chart-title">📊 Ключи по дням (1.1)</h3>
+      <h3 class="chart-title">📊 Ключи по дням</h3>
       <div class="chart" id="key-chart">
         <div class="chart-bar" style="height:20%"></div>
         <div class="chart-bar" style="height:45%"></div>
@@ -76,26 +78,11 @@
       </div>
     </div>
 
-    <!-- ===== КАРТА СЕРВЕРОВ (7.2) ===== -->
+    <!-- НАСТОЯЩАЯ КАРТА -->
     <div class="map-container">
-      <h3 class="map-title">🌍 Карта серверов (7.2)</h3>
-      <div class="map" id="server-map">
-        <div class="map-marker" style="top:20%;left:45%;" title="Германия">🇩🇪</div>
-        <div class="map-marker" style="top:15%;left:55%;" title="Финляндия">🇫🇮</div>
-        <div class="map-marker" style="top:25%;left:50%;" title="Швеция">🇸🇪</div>
-        <div class="map-marker" style="top:22%;left:48%;" title="Нидерланды">🇳🇱</div>
-        <div class="map-marker" style="top:18%;left:30%;" title="Канада">🇨🇦</div>
-        <div class="map-marker" style="top:40%;left:35%;" title="Бразилия">🇧🇷</div>
-        <div class="map-marker" style="top:35%;left:70%;" title="Индия">🇮🇳</div>
-        <div class="map-marker" style="top:45%;left:75%;" title="ЮАР">🇿🇦</div>
-        <div class="map-marker" style="top:30%;left:65%;" title="ОАЭ">🇦🇪</div>
-        <div class="map-marker" style="top:12%;left:65%;" title="Великобритания">🇬🇧</div>
-        <div class="map-marker" style="top:28%;left:58%;" title="Польша">🇵🇱</div>
-        <div class="map-marker" style="top:35%;left:60%;" title="Франция">🇫🇷</div>
-        <div class="map-marker" style="top:18%;left:70%;" title="Швейцария">🇨🇭</div>
-        <div class="map-marker" style="top:45%;left:80%;" title="Австралия">🇦🇺</div>
-      </div>
-      <p class="map-subtitle">● Наведи на флаг для названия страны</p>
+      <h3 class="map-title">🌍 Карта серверов</h3>
+      <div id="server-map" style="height:300px;border-radius:8px;background:#0a0a0f;"></div>
+      <p class="map-subtitle">● Кликни по маркеру, чтобы увидеть страну</p>
     </div>
 
     <div class="guide">
@@ -107,7 +94,7 @@
       </ol>
     </div>
 
-    <!-- ===== ФИЛЬТРЫ ===== -->
+    <!-- ФИЛЬТРЫ -->
     <div class="filters">
       <select id="country-filter" onchange="applyFilters()" class="filter-select">
         <option value="all">🌍 Все страны</option>
@@ -127,7 +114,7 @@
         <option value="south_africa">🇿🇦 ЮАР</option>
         <option value="uae">🇦🇪 ОАЭ</option>
         <option value="japan">🇯🇵 Япония</option>
-        <option value="south_korea">🇰🇷 Южная Корея</option>
+        <option value="south_korea">🇰🇷 Корея</option>
         <option value="singapore">🇸🇬 Сингапур</option>
         <option value="hong_kong">🇭🇰 Гонконг</option>
         <option value="spain">🇪🇸 Испания</option>
@@ -165,7 +152,7 @@
       <button class="export-btn" onclick="copyAllKeys()">📋 Копировать всё</button>
     </div>
 
-    <p class="section-label">🌍 Обычный VPN — 29 стран (5.1)</p>
+    <p class="section-label">🌍 Обычный VPN — 29 стран</p>
     <div class="tabs" id="tabs-countries">
       <button class="tab" onclick="switchMode('baltics')">🇱🇹🇪🇪🇱🇻 Прибалтика</button>
       <button class="tab" onclick="switchMode('finland')">🇫🇮 Финляндия</button>
@@ -236,6 +223,6 @@
     </footer>
   </div>
 
-  <script src="script.js?v=7"></script>
+  <script src="script.js?v=8"></script>
 </body>
 </html>

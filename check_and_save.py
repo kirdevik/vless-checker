@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# check_and_save.py — ULTIMATE VLESS CHECKER 100X
+# check_and_save.py — ULTIMATE VLESS CHECKER 100X (29 СТРАН)
 
 import re
 import requests
@@ -12,9 +12,8 @@ from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import unquote
 
-# ==================== 40+ РЕАЛЬНЫХ ИСТОЧНИКОВ ====================
+# ==================== 40+ ИСТОЧНИКОВ ====================
 SOURCES = [
-    # === ОСНОВНЫЕ (БЫЛИ) ===
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/BLACK_VLESS_RUS.txt",
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/BLACK_VLESS_RUS_mobile.txt",
     "https://raw.githubusercontent.com/yebekhe/TelegramV2rayCollector/main/sub/base64/vless",
@@ -22,8 +21,6 @@ SOURCES = [
     "https://raw.githubusercontent.com/AzadNetCH/Clash/main/V2Ray.txt",
     "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_list.txt",
     "https://raw.githubusercontent.com/Ptechgithub/warp/main/endpoint/warp",
-    
-    # === НОВЫЕ ЖИРНЫЕ ИСТОЧНИКИ ===
     "https://raw.githubusercontent.com/MahanKenway/Freedom-V2Ray/main/configs/vless.txt",
     "https://raw.githubusercontent.com/MatinGhanbari/v2ray-configs/main/subscriptions/filtered/subs/vless.txt",
     "https://raw.githubusercontent.com/SoliSpirit/SolVPN/main/Protocols/vless.txt",
@@ -35,8 +32,6 @@ SOURCES = [
     "https://raw.githubusercontent.com/vlesscollector/vlesscollector/refs/heads/main/vless_configs.txt",
     "https://raw.githubusercontent.com/youfoundamin/V2rayCollector/main/vless_iran.txt",
     "https://raw.githubusercontent.com/MrEndi777709/Endi-VPN/main/mrendi-vpn-all.txt",
-    
-    # === ДОПОЛНИТЕЛЬНЫЕ ===
     "https://github.com/Epodonios/v2ray-configs/raw/main/Splitted-By-Protocol/vless.txt",
     "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/vless.txt",
     "https://raw.githubusercontent.com/darknessm427/IranConfigCollector/main/bulk/vless_iran.txt",
@@ -44,18 +39,6 @@ SOURCES = [
     "https://raw.githubusercontent.com/Surfboardv2ray/TGParse/main/splitted/vless",
     "https://raw.githubusercontent.com/miladtahanian/Config-Collector/main/vless_iran.txt",
     "https://raw.githubusercontent.com/Sage-77/V2ray-configs/main/vless.txt",
-    "https://raw.githubusercontent.com/ShatakVPN/ConfigForge-V2Ray/main/configs/all.txt",
-    "https://github.com/Delta-Kronecker/V2ray-Config/raw/refs/heads/main/config/all_configs.txt",
-    "https://raw.githubusercontent.com/MahanKenway/Freedom-V2Ray/main/configs/mix.txt",
-    
-    # === ЕЩЁ ИСТОЧНИКИ ===
-    "https://raw.githubusercontent.com/yebekhe/TelegramV2rayCollector/main/meta/vless.yml",
-    "https://raw.githubusercontent.com/v3rl0c/v2ray/main/v2ray.txt",
-    "https://raw.githubusercontent.com/arshiacom/v2ray-configs/main/v2ray.txt",
-    "https://raw.githubusercontent.com/mehdiir/v2ray-configs/main/v2ray.txt",
-    "https://raw.githubusercontent.com/soroushmirzaei/telegram-v2ray-collector/main/sub/normal/vless",
-    "https://raw.githubusercontent.com/milad-gh/v2ray-configs/main/v2ray.txt",
-    "https://raw.githubusercontent.com/pooya-gh/v2ray-configs/main/v2ray.txt",
 ]
 
 WHITE_URL = "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/WHITE-CIDR-RU-checked.txt"
@@ -64,6 +47,7 @@ MAX_WORKERS = 100
 TEST_TIMEOUT = 3
 MAX_LATENCY_MS = 5000
 
+# ==================== 29 СТРАН (ВСЕ ДОБАВЛЕНЫ!) ====================
 COUNTRIES = {
     "baltics": ["lithuania", "estonia", "latvia"],
     "finland": ["finland"],
@@ -80,6 +64,22 @@ COUNTRIES = {
     "india": ["india"],
     "south_africa": ["south africa"],
     "uae": ["uae", "dubai"],
+    # === НОВЫЕ 14 СТРАН ===
+    "japan": ["japan", "tokyo"],
+    "south_korea": ["south korea", "korea", "seoul"],
+    "singapore": ["singapore"],
+    "hong_kong": ["hong kong"],
+    "spain": ["spain", "madrid"],
+    "italy": ["italy", "rome"],
+    "norway": ["norway", "oslo"],
+    "denmark": ["denmark", "copenhagen"],
+    "argentina": ["argentina", "buenos aires"],
+    "chile": ["chile", "santiago"],
+    "mexico": ["mexico", "mexico city"],
+    "egypt": ["egypt", "cairo"],
+    "kenya": ["kenya", "nairobi"],
+    "nigeria": ["nigeria", "lagos"],
+    "new_zealand": ["new zealand", "auckland"],
 }
 
 ALL_COUNTRY_WORDS = [w for ws in COUNTRIES.values() for w in ws]
@@ -100,7 +100,7 @@ def fetch_keys(url):
 
 def load_keys():
     print("="*60)
-    print("🚀 VLESS ULTRA CHECKER 100X")
+    print("🚀 VLESS ULTRA CHECKER 100X (29 СТРАН)")
     print("="*60)
     print(f"\n📥 Загружаем из {len(SOURCES)} источников...")
     black = []

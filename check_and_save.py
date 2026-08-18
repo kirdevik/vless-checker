@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# check_and_save.py — ULTIMATE VLESS CHECKER 100X (29 СТРАН)
+# check_and_save.py — ULTIMATE VLESS CHECKER (ВСЕ СТРАНЫ)
 
 import re
 import requests
@@ -7,7 +7,6 @@ import socket
 import time
 import json
 import os
-from collections import defaultdict
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import unquote
@@ -47,7 +46,7 @@ MAX_WORKERS = 100
 TEST_TIMEOUT = 3
 MAX_LATENCY_MS = 5000
 
-# ==================== 29 СТРАН (ВСЕ ДОБАВЛЕНЫ!) ====================
+# ==================== ВСЕ СТРАНЫ (БЕЗ OTHER!) ====================
 COUNTRIES = {
     "baltics": ["lithuania", "estonia", "latvia"],
     "finland": ["finland"],
@@ -64,7 +63,6 @@ COUNTRIES = {
     "india": ["india"],
     "south_africa": ["south africa"],
     "uae": ["uae", "dubai"],
-    # === НОВЫЕ 14 СТРАН ===
     "japan": ["japan", "tokyo"],
     "south_korea": ["south korea", "korea", "seoul"],
     "singapore": ["singapore"],
@@ -100,7 +98,7 @@ def fetch_keys(url):
 
 def load_keys():
     print("="*60)
-    print("🚀 VLESS ULTRA CHECKER 100X (29 СТРАН)")
+    print("🚀 VLESS ULTRA CHECKER (ВСЕ СТРАНЫ)")
     print("="*60)
     print(f"\n📥 Загружаем из {len(SOURCES)} источников...")
     black = []
@@ -127,24 +125,10 @@ def parse_key(key):
     except:
         return None
 
-def get_country(fragment):
-    if not fragment:
-        return None, None
-    flag_match = re.search(r'([\U0001F1E0-\U0001F1FF]{2})', fragment)
-    flag = flag_match.group(1) if flag_match else "🌍"
-    country_match = re.search(r'([A-Z][A-Za-z\u00C0-\u017E\s\-\.\(\)]+?)(?:\s*[,|]|\s*\(|$)', fragment)
-    country = country_match.group(1).strip() if country_match else None
-    if country and country.lower() in SKIP_NAMES:
-        country = "Other"
-        flag = "🌍"
-    return country, flag
-
 def filter_keys(keys, mode):
     if mode in COUNTRIES:
         words = COUNTRIES[mode]
         return [k for k in keys if any(w in k.lower() for w in words)]
-    if mode == "other":
-        return [k for k in keys if not any(w in k.lower() for w in ALL_COUNTRY_WORDS) and "russia" not in k.lower()]
     if mode == "russia":
         return [k for k in keys if "russia" in k.lower() or "moscow" in k.lower()]
     if mode.startswith("w_"):
@@ -152,8 +136,6 @@ def filter_keys(keys, mode):
         if country in COUNTRIES:
             words = COUNTRIES[country]
             return [k for k in keys if any(w in k.lower() for w in words)]
-        if country == "other":
-            return [k for k in keys if not any(w in k.lower() for w in ALL_COUNTRY_WORDS) and "russia" not in k.lower()]
     return []
 
 def test_key(key):
@@ -213,7 +195,7 @@ def main():
     results = {"updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}
 
     print("\n🔍 Проверка BLACK ключей...")
-    for country in list(COUNTRIES.keys()) + ["other"]:
+    for country in list(COUNTRIES.keys()):
         filtered = filter_keys(black, country)
         print(f"  📌 {country}: {len(filtered)} ключей")
         if filtered:
@@ -222,32 +204,8 @@ def main():
         else:
             results[country] = {"total_working": 0, "total": 0}
 
-    other_keys = filter_keys(black, "other")
-    print(f"\n🌍 Группировка 'других' стран...")
-    country_groups = defaultdict(list)
-    country_flags = {}
-    for k in other_keys:
-        p = parse_key(k)
-        if p:
-            name, flag = get_country(p["fragment"])
-            if not name or name.lower() in SKIP_NAMES:
-                name = "Other"
-                flag = "🌍"
-            country_groups[name].append(k)
-            if name not in country_flags:
-                country_flags[name] = flag
-
-    other_countries = {}
-    for name, keys in country_groups.items():
-        print(f"  📌 {name}: {len(keys)} ключей")
-        checked = check_keys(keys, old_first_seen)
-        checked["flag"] = country_flags[name]
-        other_countries[name] = checked
-        print(f"    ✅ Рабочих: {checked['total_working']}/{checked['total']}")
-    results["other_countries"] = other_countries
-
     print("\n🔍 Проверка WHITE ключей...")
-    for mode in ["w_baltics", "w_finland", "w_germany", "w_sweden", "w_netherlands", "w_poland", "w_other", "russia"]:
+    for mode in ["w_baltics", "w_finland", "w_germany", "w_sweden", "w_netherlands", "w_poland", "russia"]:
         filtered = filter_keys(white, mode)
         print(f"  📌 {mode}: {len(filtered)} ключей")
         if filtered:

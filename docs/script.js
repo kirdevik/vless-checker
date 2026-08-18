@@ -275,4 +275,82 @@ function showQR(key) {
   qrContainer.onclick = () => qrContainer.remove();
   
   const qrBox = document.createElement('div');
-  qrBox.style.cssText = 'background:#14141c;padding:20px;border-radius:12px
+  qrBox.style.cssText = 'background:#14141c;padding:20px;border-radius:12px;max-width:300px;text-align:center;';
+  qrBox.innerHTML = `
+    <h3 style="color:#fff;margin-bottom:12px;">📱 QR-код</h3>
+    <div id="qr-code" style="background:#fff;padding:10px;border-radius:8px;display:inline-block;"></div>
+    <p style="color:#666;font-size:0.7rem;margin-top:10px;">Наведите камеру телефона</p>
+    <button onclick="this.closest('div[style]').remove()" style="margin-top:10px;padding:6px 20px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer;">Закрыть</button>
+  `;
+  
+  qrContainer.appendChild(qrBox);
+  document.body.appendChild(qrContainer);
+  
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
+  script.onload = () => {
+    new QRCode(document.getElementById('qr-code'), {
+      text: key,
+      width: 200,
+      height: 200,
+      colorDark: '#000',
+      colorLight: '#fff',
+    });
+  };
+  document.head.appendChild(script);
+}
+
+function exportKeys() {
+  if (!data) {
+    alert('Данные ещё не загружены');
+    return;
+  }
+  
+  let allKeys = [];
+  MODES.forEach(m => {
+    if (m.key === 'other' && data.other_countries) {
+      Object.values(data.other_countries).forEach(c => {
+        if (c.best) allKeys.push(c.best);
+      });
+    } else if (data[m.key] && data[m.key].best) {
+      allKeys.push(data[m.key].best);
+    }
+  });
+  
+  const text = allKeys.join('\n\n');
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'vless_keys.txt';
+  a.click();
+}
+
+function applyFilters() {
+  currentFilter = document.getElementById('protocol-filter').value;
+  searchQuery = document.getElementById('search-input').value.toLowerCase();
+  
+  document.querySelectorAll('.tab').forEach(tab => {
+    const label = tab.textContent.toLowerCase();
+    if (searchQuery && !label.includes(searchQuery)) {
+      tab.style.display = 'none';
+    } else {
+      tab.style.display = '';
+    }
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.copy-small').forEach(btn => {
+    const key = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
+    btn.parentElement.appendChild(Object.assign(document.createElement('button'), {
+      textContent: '📱 QR',
+      className: 'copy-small',
+      onclick: () => showQR(key),
+      style: 'margin-left:4px;'
+    }));
+  });
+});
+
+setInterval(loadData, 60000);
+buildCards();
+loadData();

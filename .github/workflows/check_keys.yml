@@ -25,7 +25,9 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install requests
+        run: |
+          pip install requests
+          pip install pyyaml
 
       - name: Run checker
         run: python check_and_save.py

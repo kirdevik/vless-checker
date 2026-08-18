@@ -1,8 +1,7 @@
 const KEYS_URL = 'keys.json';
 let data = null;
-let currentFilter = 'all';
-let searchQuery = '';
 let updateInterval = null;
+let map = null;
 let favorites = JSON.parse(localStorage.getItem('favorites') || '{}');
 
 const MODES = [
@@ -46,6 +45,73 @@ const MODES = [
   {key:'w_other',label:'🌍 Остальные',section:'white'},
   {key:'russia',label:'🇷🇺 Россия (Москва)',section:'white'},
 ];
+
+// Координаты для карты
+const COUNTRY_COORDS = {
+  baltics: [56.9, 24.6],
+  finland: [61.9, 25.7],
+  germany: [51.1, 10.5],
+  sweden: [60.1, 18.6],
+  netherlands: [52.1, 4.9],
+  poland: [51.9, 19.1],
+  france: [46.6, 2.2],
+  uk: [51.5, -0.1],
+  switzerland: [46.8, 8.2],
+  canada: [45.4, -75.7],
+  australia: [-33.9, 151.2],
+  brazil: [-15.8, -47.9],
+  india: [21.1, 79.0],
+  south_africa: [-33.9, 18.4],
+  uae: [23.4, 54.8],
+  japan: [35.7, 139.7],
+  south_korea: [37.6, 127.0],
+  singapore: [1.3, 103.8],
+  hong_kong: [22.3, 114.2],
+  spain: [40.4, -3.7],
+  italy: [41.9, 12.5],
+  norway: [59.9, 10.7],
+  denmark: [55.7, 12.5],
+  argentina: [-34.6, -58.4],
+  chile: [-33.4, -70.6],
+  mexico: [19.4, -99.1],
+  egypt: [30.0, 31.2],
+  kenya: [-1.3, 36.8],
+  nigeria: [6.5, 3.4],
+  new_zealand: [-36.8, 174.7],
+};
+
+const COUNTRY_FLAGS = {
+  baltics: '🇱🇹🇪🇪🇱🇻',
+  finland: '🇫🇮',
+  germany: '🇩🇪',
+  sweden: '🇸🇪',
+  netherlands: '🇳🇱',
+  poland: '🇵🇱',
+  france: '🇫🇷',
+  uk: '🇬🇧',
+  switzerland: '🇨🇭',
+  canada: '🇨🇦',
+  australia: '🇦🇺',
+  brazil: '🇧🇷',
+  india: '🇮🇳',
+  south_africa: '🇿🇦',
+  uae: '🇦🇪',
+  japan: '🇯🇵',
+  south_korea: '🇰🇷',
+  singapore: '🇸🇬',
+  hong_kong: '🇭🇰',
+  spain: '🇪🇸',
+  italy: '🇮🇹',
+  norway: '🇳🇴',
+  denmark: '🇩🇰',
+  argentina: '🇦🇷',
+  chile: '🇨🇱',
+  mexico: '🇲🇽',
+  egypt: '🇪🇬',
+  kenya: '🇰🇪',
+  nigeria: '🇳🇬',
+  new_zealand: '🇳🇿',
+};
 
 function detectProtocol(key) {
   if (key.includes('security=reality') || key.includes('pbk=')) return 'Reality';
@@ -92,8 +158,58 @@ async function loadData() {
     data = await resp.json();
     renderAll();
     startUpdateTimer();
+    initMap();
   } catch (e) {
     document.getElementById('updated').textContent = '❌ Ошибка загрузки данных';
+  }
+}
+
+function initMap() {
+  if (map) { map.remove(); }
+  
+  map = L.map('server-map').setView([20, 10], 2);
+  
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(map);
+  
+  // Добавляем маркеры для стран, где есть ключи
+  let hasMarkers = false;
+  MODES.forEach(m => {
+    const coords = COUNTRY_COORDS[m.key];
+    if (coords && data && data[m.key] && data[m.key].total_working > 0) {
+      hasMarkers = true;
+      const marker = L.circleMarker(coords, {
+        radius: 8,
+        fillColor: '#4ade80',
+        color: '#4ade80',
+        weight: 2,
+        opacity: 1,
+        fillOpacity: 0.7
+      }).addTo(map);
+      
+      const flag = COUNTRY_FLAGS[m.key] || '🌍';
+      const count = data[m.key].total_working || 0;
+      const speed = data[m.key].best_info ? data[m.key].best_info.latency_ms : '?';
+      
+      marker.bindPopup(`
+        <div style="color:#000;font-family:sans-serif;padding:4px;">
+          <strong>${flag} ${m.label}</strong><br>
+          Рабочих ключей: ${count}<br>
+          Лучшая скорость: ${speed} мс
+        </div>
+      `);
+    }
+  });
+  
+  // Если нет ни одной точки — показываем сообщение
+  if (!hasMarkers) {
+    const popup = L.popup()
+      .setLatLng([20, 10])
+      .setContent('Нет данных о серверах. Обновите страницу.')
+      .openOn(map);
   }
 }
 
@@ -124,7 +240,6 @@ function renderAll() {
 
   let totalKeys = 0, workingKeys = 0, totalLatency = 0, latencyCount = 0;
   const keyCounts = {};
-  let lastKey = null;
 
   MODES.forEach(m => {
     if (m.key === 'other') {
@@ -137,7 +252,6 @@ function renderAll() {
             totalLatency += c.best_info.latency_ms;
             latencyCount++;
           }
-          if (c.best) lastKey = c.best;
         });
       }
     } else if (data[m.key]) {
@@ -148,11 +262,9 @@ function renderAll() {
         totalLatency += data[m.key].best_info.latency_ms;
         latencyCount++;
       }
-      if (data[m.key].best) lastKey = data[m.key].best;
     }
   });
 
-  // 1.6 Процент рабочих ключей
   const successRate = totalKeys > 0 ? Math.round((workingKeys / totalKeys) * 100) : 0;
   
   document.getElementById('total-sources').textContent = '40+';
@@ -161,7 +273,7 @@ function renderAll() {
   document.getElementById('success-rate').textContent = successRate + '%';
   document.getElementById('avg-speed').textContent = latencyCount ? Math.round(totalLatency / latencyCount) + ' мс' : '—';
 
-  // Обновляем график (1.1)
+  // График
   const bars = document.querySelectorAll('.chart-bar');
   const heights = [20, 45, 70, 55, 90, 65, 100];
   const workingPercent = Math.min(100, Math.round((workingKeys / Math.max(1, totalKeys)) * 100));
@@ -170,7 +282,7 @@ function renderAll() {
     bar.style.height = h + '%';
   });
 
-  // Обновляем количество ключей в вкладках
+  // Количество ключей в вкладках
   document.querySelectorAll('.tab').forEach(tab => {
     const mode = tab.getAttribute('onclick').match(/'([^']+)'/)[1];
     const count = keyCounts[mode] || 0;
@@ -215,6 +327,16 @@ function renderAll() {
 
   setupCollapsed('tabs-collapsed', 'collapsed-toggle', 'collapsed-label', emptyVpn);
   setupCollapsed('tabs-collapsed-white', 'collapsed-toggle-white', 'collapsed-label-white', emptyWhite);
+  
+  // Обновляем карту с новыми данными
+  if (map) {
+    map.eachLayer(layer => {
+      if (layer instanceof L.CircleMarker) {
+        map.removeLayer(layer);
+      }
+    });
+  }
+  initMap();
 }
 
 function setupCollapsed(collapsedId, toggleId, labelId, emptyTabs) {
@@ -245,7 +367,7 @@ function renderCountryBlock(name, d) {
   const topList = d.top10 || [];
   const flag = d.flag || '🌍';
   let html = `<div class="country-block">
-    <h3 class="country-title">${flag} ${name} <span class="country-stats">· ${d.total_working} из ${d.total} (1.2)</span></h3>`;
+    <h3 class="country-title">${flag} ${name} <span class="country-stats">· ${d.total_working} из ${d.total}</span></h3>`;
   if (topList.length > 0) {
     html += topList.map((k, i) => {
       const protocol = detectProtocol(k.key);
@@ -403,7 +525,6 @@ function pingKey(key, btn) {
   const host = parsed.host;
   const port = parsed.port;
   
-  // Используем WebSocket для пинга (реальный пинг)
   try {
     const ws = new WebSocket(`wss://${host}:${port}`);
     const timeout = setTimeout(() => {
@@ -543,7 +664,6 @@ function forceUpdate() {
   btn.textContent = '⏳ Обновление...';
   btn.disabled = true;
   
-  // Просто перезагружаем данные
   loadData().then(() => {
     btn.textContent = '✅ Обновлено!';
     setTimeout(() => {
@@ -563,7 +683,7 @@ function applyFilters() {
   const countryFilter = document.getElementById('country-filter').value;
   const protocolFilter = document.getElementById('protocol-filter').value;
   const speedFilter = document.getElementById('speed-filter').value;
-  searchQuery = document.getElementById('search-input').value.toLowerCase();
+  const searchQuery = document.getElementById('search-input').value.toLowerCase();
   
   document.querySelectorAll('.tab').forEach(tab => {
     const mode = tab.getAttribute('onclick').match(/'([^']+)'/)?.[1] || '';
@@ -582,7 +702,6 @@ function applyFilters() {
   });
 }
 
-// ===== QR-КОД =====
 function showQR(key) {
   const overlay = document.createElement('div');
   overlay.className = 'qr-overlay';
@@ -626,7 +745,6 @@ function showQR(key) {
   }
 }
 
-// Добавляем QR-кнопки
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.copy-small').forEach(btn => {
     const match = btn.getAttribute('onclick').match(/'([^']+)'/);

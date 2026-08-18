@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VLESS Checker PRO</title>
-  <meta name="description" content="Бесплатные VLESS-ключи из 100+ источников. 15 стран." />
+  <title>Kirdevik VLESS Checker PRO</title>
+  <meta name="description" content="Бесплатные VLESS-ключи из 40+ источников. 15 стран." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔑</text></svg>" />
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="styles.css" />
@@ -12,7 +12,7 @@
 <body>
   <div class="container">
     <header>
-      <h1>🔑 VLESS Checker <span class="badge">PRO</span></h1>
+      <h1>🔑 Kirdevik <span class="highlight">VLESS</span> Checker <span class="badge">PRO</span></h1>
       <p class="subtitle" id="updated">Загружаем данные...</p>
     </header>
 
@@ -47,17 +47,18 @@
       <ol>
         <li>Выбери страну для <span>обычного VPN</span> или <span>Белые списки</span>.</li>
         <li>Нажми <span>Копировать</span> и вставь ключ в приложение.</li>
-        <li>Ключи обновляются <span>каждые 30 минут</span>.</li>
+        <li>Ключи обновляются <span>каждые 30 минут</span> из 40+ источников.</li>
       </ol>
     </div>
 
+    <!-- ФИЛЬТРЫ — ТЕПЕРЬ ВСЕ ОДИНАКОВОГО РАЗМЕРА! -->
     <div class="filters">
       <select id="protocol-filter" onchange="applyFilters()">
-        <option value="all">Все протоколы</option>
-        <option value="reality">Reality</option>
-        <option value="ws">WebSocket</option>
-        <option value="tcp">TCP</option>
-        <option value="grpc">gRPC</option>
+        <option value="all">📡 Все протоколы</option>
+        <option value="reality">🔒 Reality</option>
+        <option value="ws">🌐 WebSocket</option>
+        <option value="tcp">🔌 TCP</option>
+        <option value="grpc">⚡ gRPC</option>
       </select>
       <input type="text" id="search-input" placeholder="🔍 Поиск по стране..." oninput="applyFilters()" />
       <button class="export-btn" onclick="exportKeys()">📥 Экспорт</button>
@@ -114,7 +115,7 @@
     <div id="cards"></div>
 
     <footer>
-      <p>⚡ Обновляется каждые 30 минут из 100+ источников</p>
+      <p>⚡ Обновляется каждые 30 минут из 40+ источников</p>
       <p>📊 <a href="#" onclick="exportKeys();return false;">Экспорт всех ключей</a></p>
     </footer>
   </div>

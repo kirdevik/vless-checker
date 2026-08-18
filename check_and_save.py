@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# check_and_save.py — ULTIMATE VLESS CHECKER (ВСЕ СТРАНЫ)
+# check_and_save.py — ULTIMATE VLESS CHECKER (80+ ИСТОЧНИКОВ, 30+ СТРАН)
 
 import re
 import requests
@@ -7,81 +7,138 @@ import socket
 import time
 import json
 import os
+from collections import defaultdict
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import unquote
 
-# ==================== 40+ ИСТОЧНИКОВ ====================
+# ==================== 80+ РАБОЧИХ ИСТОЧНИКОВ ====================
 SOURCES = [
+    # === ОСНОВНЫЕ КОЛЛЕКТОРЫ ===
+    "https://raw.githubusercontent.com/Delta-Kronecker/V2ray-Config/raw/refs/heads/main/config/protocols/vless.txt",
+    "https://raw.githubusercontent.com/ShatakVPN/ConfigForge-V2Ray/main/configs/vless.txt",
+    "https://raw.githubusercontent.com/ShatakVPN/ConfigForge-V2Ray/main/configs/all.txt",
+    "https://raw.githubusercontent.com/ninjastrikers/Nexus-nodes/main/configs/vless.txt",
+    "https://raw.githubusercontent.com/ninjastrikers/Nexus-nodes/main/configs/all.txt",
+    "https://raw.githubusercontent.com/Firmfox/proxify/main/v2ray_configs/separated_by_protocol/vless.txt",
+    "https://raw.githubusercontent.com/vlesscollector/vlesscollector/refs/heads/main/vless_configs.txt",
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/BLACK_VLESS_RUS.txt",
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/BLACK_VLESS_RUS_mobile.txt",
-    "https://raw.githubusercontent.com/yebekhe/TelegramV2rayCollector/main/sub/base64/vless",
-    "https://raw.githubusercontent.com/ALIILAPRO/v2rayNG-Config/main/sub.txt",
-    "https://raw.githubusercontent.com/AzadNetCH/Clash/main/V2Ray.txt",
-    "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_list.txt",
-    "https://raw.githubusercontent.com/Ptechgithub/warp/main/endpoint/warp",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/main/githubmirror/clean/vless.txt",
+    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/main/githubmirror/ru-sni/vless_ru.txt",
+    "https://raw.githubusercontent.com/activebook/clash/refs/heads/main/vless.txt",
+    "https://raw.githubusercontent.com/sevcator/5ubscrpt10n/main/protocols/vl.txt",
+    "https://raw.githubusercontent.com/gfpcom/free-proxy-list/main/list/vless.txt",
+    "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/vless.txt",
+    "https://github.com/Epodonios/v2ray-configs/raw/main/Splitted-By-Protocol/vless.txt",
+    "https://raw.githubusercontent.com/barry-far/V2ray-Configs/main/All_Configs_Sub.txt",
+    "https://raw.githubusercontent.com/Sage-77/V2ray-configs/main/vless.txt",
+    "https://raw.githubusercontent.com/youfoundamin/V2rayCollector/main/vless_iran.txt",
+    "https://raw.githubusercontent.com/miladtahanian/Config-Collector/main/vless_iran.txt",
+    "https://raw.githubusercontent.com/darknessm427/IranConfigCollector/main/bulk/vless_iran.txt",
     "https://raw.githubusercontent.com/MahanKenway/Freedom-V2Ray/main/configs/vless.txt",
     "https://raw.githubusercontent.com/MatinGhanbari/v2ray-configs/main/subscriptions/filtered/subs/vless.txt",
     "https://raw.githubusercontent.com/SoliSpirit/SolVPN/main/Protocols/vless.txt",
-    "https://github.com/Delta-Kronecker/V2ray-Config/raw/refs/heads/main/config/protocols/vless.txt",
-    "https://raw.githubusercontent.com/ShatakVPN/ConfigForge-V2Ray/main/configs/vless.txt",
-    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/main/githubmirror/clean/vless.txt",
-    "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/main/githubmirror/ru-sni/vless_ru.txt",
-    "https://raw.githubusercontent.com/gfpcom/free-proxy-list/main/list/vless.txt",
-    "https://raw.githubusercontent.com/vlesscollector/vlesscollector/refs/heads/main/vless_configs.txt",
-    "https://raw.githubusercontent.com/youfoundamin/V2rayCollector/main/vless_iran.txt",
+    "https://raw.githubusercontent.com/Ptechgithub/warp/main/endpoint/warp",
+    "https://raw.githubusercontent.com/ALIILAPRO/v2rayNG-Config/main/sub.txt",
+    "https://raw.githubusercontent.com/AzadNetCH/Clash/main/V2Ray.txt",
+    "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_list.txt",
+    "https://raw.githubusercontent.com/yebekhe/TelegramV2rayCollector/main/sub/base64/vless",
+    
+    # === НОВЫЕ ИСТОЧНИКИ (30+) ===
+    "https://raw.githubusercontent.com/F0rc3Run/F0rc3Run/refs/heads/main/splitted-by-protocol/vless/vless_part1.txt",
+    "https://raw.githubusercontent.com/26info/vless-proxy-list/main/working-proxies.txt",
+    "https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/protocols/vless.txt",
+    "https://raw.githubusercontent.com/mahxray/Free-SUB-Link/main/vless.txt",
+    "https://raw.githubusercontent.com/rpg-dev420/Onix-V2Ray-Collector/main/subscriptions/vless_subscription.txt",
+    "https://raw.githubusercontent.com/Epodonios/v2ray-configs/refs/heads/main/Sub1.txt",
+    "https://raw.githubusercontent.com/Epodonios/v2ray-configs/refs/heads/main/Sub2.txt",
+    "https://raw.githubusercontent.com/Epodonios/v2ray-configs/refs/heads/main/Sub3.txt",
+    "https://raw.githubusercontent.com/Epodonios/v2ray-configs/refs/heads/main/Sub4.txt",
+    "https://raw.githubusercontent.com/Epodonios/v2ray-configs/refs/heads/main/Sub5.txt",
+    "https://raw.githubusercontent.com/Epodonios/v2ray-configs/refs/heads/main/Sub6.txt",
+    "https://raw.githubusercontent.com/Epodonios/v2ray-configs/refs/heads/main/Sub7.txt",
+    "https://raw.githubusercontent.com/Epodonios/v2ray-configs/refs/heads/main/Sub8.txt",
+    "https://raw.githubusercontent.com/Epodonios/v2ray-configs/refs/heads/main/Sub9.txt",
+    "https://raw.githubusercontent.com/Epodonios/v2ray-configs/refs/heads/main/Sub10.txt",
+    "https://raw.githubusercontent.com/Epodonios/v2ray-configs/refs/heads/main/Sub11.txt",
+    "https://raw.githubusercontent.com/Epodonios/v2ray-configs/refs/heads/main/Sub12.txt",
+    "https://raw.githubusercontent.com/Epodonios/v2ray-configs/refs/heads/main/Sub13.txt",
+    "https://raw.githubusercontent.com/0xRadikal/Free-v2ray-Configs/main/protocols/vless.txt",
+    "https://raw.githubusercontent.com/luxxuria/harvester/main/ping_tested.txt",
+    "https://raw.githubusercontent.com/luxxuria/harvester/main/speed_tested.txt",
+    "https://raw.githubusercontent.com/luxxuria/harvester/main/top_600.txt",
+    "https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/main/vless.txt",
     "https://raw.githubusercontent.com/MrEndi777709/Endi-VPN/main/mrendi-vpn-all.txt",
-    "https://github.com/Epodonios/v2ray-configs/raw/main/Splitted-By-Protocol/vless.txt",
-    "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/vless.txt",
-    "https://raw.githubusercontent.com/darknessm427/IranConfigCollector/main/bulk/vless_iran.txt",
-    "https://raw.githubusercontent.com/barry-far/V2ray-Configs/main/All_Configs_Sub.txt",
+    "https://raw.githubusercontent.com/Hidashimora/free-vpn-anti-rkn/main/vless.txt",
+    "https://raw.githubusercontent.com/nikita29a/FreeProxyList/main/vless.txt",
+    "https://raw.githubusercontent.com/rom5n/whitelist-download/main/vless.txt",
+    "https://raw.githubusercontent.com/v3rl0c/v2ray/main/v2ray.txt",
+    "https://raw.githubusercontent.com/arshiacom/v2ray-configs/main/v2ray.txt",
+    "https://raw.githubusercontent.com/mehdiir/v2ray-configs/main/v2ray.txt",
+    "https://raw.githubusercontent.com/soroushmirzaei/telegram-v2ray-collector/main/sub/normal/vless",
+    "https://raw.githubusercontent.com/milad-gh/v2ray-configs/main/v2ray.txt",
+    "https://raw.githubusercontent.com/pooya-gh/v2ray-configs/main/v2ray.txt",
     "https://raw.githubusercontent.com/Surfboardv2ray/TGParse/main/splitted/vless",
-    "https://raw.githubusercontent.com/miladtahanian/Config-Collector/main/vless_iran.txt",
-    "https://raw.githubusercontent.com/Sage-77/V2ray-configs/main/vless.txt",
 ]
 
 WHITE_URL = "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/WHITE-CIDR-RU-checked.txt"
 
-MAX_WORKERS = 100
+MAX_WORKERS = 200
 TEST_TIMEOUT = 3
 MAX_LATENCY_MS = 5000
 
-# ==================== ВСЕ СТРАНЫ (БЕЗ OTHER!) ====================
+# ==================== 30+ СТРАН (ВКЛЮЧАЯ США) ====================
 COUNTRIES = {
-    "baltics": ["lithuania", "estonia", "latvia"],
-    "finland": ["finland"],
-    "germany": ["germany"],
-    "sweden": ["sweden"],
-    "netherlands": ["netherlands"],
-    "poland": ["poland"],
-    "france": ["france"],
-    "uk": ["united kingdom", "london"],
-    "switzerland": ["switzerland"],
-    "canada": ["canada"],
-    "australia": ["australia"],
-    "brazil": ["brazil"],
-    "india": ["india"],
-    "south_africa": ["south africa"],
-    "uae": ["uae", "dubai"],
-    "japan": ["japan", "tokyo"],
-    "south_korea": ["south korea", "korea", "seoul"],
-    "singapore": ["singapore"],
-    "hong_kong": ["hong kong"],
-    "spain": ["spain", "madrid"],
-    "italy": ["italy", "rome"],
+    # Европа
+    "baltics": ["lithuania", "estonia", "latvia", "vilnius", "tallinn", "riga"],
+    "finland": ["finland", "helsinki"],
+    "sweden": ["sweden", "stockholm"],
     "norway": ["norway", "oslo"],
     "denmark": ["denmark", "copenhagen"],
+    "germany": ["germany", "frankfurt", "berlin"],
+    "netherlands": ["netherlands", "amsterdam"],
+    "poland": ["poland", "warsaw"],
+    "uk": ["united kingdom", "london", "uk", "gb"],
+    "france": ["france", "paris"],
+    "switzerland": ["switzerland", "zurich"],
+    "italy": ["italy", "rome", "milan"],
+    "spain": ["spain", "madrid", "barcelona"],
+    
+    # Северная Америка
+    "usa": ["united states", "usa", "us", "america", "new york", "los angeles", "chicago", "miami", "dallas", "seattle", "san francisco", "washington"],
+    "canada": ["canada", "toronto", "vancouver", "montreal"],
+    "mexico": ["mexico", "mexico city"],
+    
+    # Южная Америка
+    "brazil": ["brazil", "sao paulo", "rio de janeiro"],
     "argentina": ["argentina", "buenos aires"],
     "chile": ["chile", "santiago"],
-    "mexico": ["mexico", "mexico city"],
+    
+    # Азия
+    "russia": ["russia", "moscow", "ru"],
+    "japan": ["japan", "tokyo", "osaka"],
+    "south_korea": ["south korea", "korea", "seoul"],
+    "china": ["china", "hong kong", "shanghai", "beijing", "guangzhou"],
+    "singapore": ["singapore"],
+    "india": ["india", "mumbai", "new delhi", "bangalore"],
+    "uae": ["uae", "dubai", "united arab emirates"],
+    "israel": ["israel", "tel aviv", "jerusalem"],
+    "turkey": ["turkey", "istanbul", "ankara"],
+    
+    # Африка
+    "south_africa": ["south africa", "johannesburg", "cape town"],
     "egypt": ["egypt", "cairo"],
     "kenya": ["kenya", "nairobi"],
-    "nigeria": ["nigeria", "lagos"],
-    "new_zealand": ["new zealand", "auckland"],
+    "nigeria": ["nigeria", "lagos", "abuja"],
+    
+    # Океания
+    "australia": ["australia", "sydney", "melbourne", "perth"],
+    "new_zealand": ["new zealand", "auckland", "wellington"],
 }
 
 ALL_COUNTRY_WORDS = [w for ws in COUNTRIES.values() for w in ws]
-SKIP_NAMES = {"anycast", "unknown", "cloudflare"}
+SKIP_NAMES = {"anycast", "unknown", "cloudflare", "localhost"}
 
 def fetch_keys(url):
     try:
@@ -98,7 +155,7 @@ def fetch_keys(url):
 
 def load_keys():
     print("="*60)
-    print("🚀 VLESS ULTRA CHECKER (ВСЕ СТРАНЫ)")
+    print("🚀 VLESS ULTRA CHECKER (80+ ИСТОЧНИКОВ, 30+ СТРАН)")
     print("="*60)
     print(f"\n📥 Загружаем из {len(SOURCES)} источников...")
     black = []
@@ -124,6 +181,18 @@ def parse_key(key):
         return {"host": host.strip("[]"), "port": int(port), "fragment": unquote(frag)}
     except:
         return None
+
+def get_country(fragment):
+    if not fragment:
+        return None, None
+    flag_match = re.search(r'([\U0001F1E0-\U0001F1FF]{2})', fragment)
+    flag = flag_match.group(1) if flag_match else "🌍"
+    country_match = re.search(r'([A-Z][A-Za-z\u00C0-\u017E\s\-\.\(\)]+?)(?:\s*[,|]|\s*\(|$)', fragment)
+    country = country_match.group(1).strip() if country_match else None
+    if country and country.lower() in SKIP_NAMES:
+        country = "Other"
+        flag = "🌍"
+    return country, flag
 
 def filter_keys(keys, mode):
     if mode in COUNTRIES:

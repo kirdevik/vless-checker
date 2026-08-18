@@ -2,48 +2,55 @@ const KEYS_URL = 'keys.json';
 let data = null;
 
 const MODES = [
-  { key: 'baltics',       label: '🇱🇹🇪🇪🇱🇻 Прибалтика', section: 'vpn' },
-  { key: 'finland',       label: '🇫🇮 Финляндия',         section: 'vpn' },
-  { key: 'germany',       label: '🇩🇪 Германия',          section: 'vpn' },
-  { key: 'sweden',        label: '🇸🇪 Швеция',            section: 'vpn' },
-  { key: 'netherlands',   label: '🇳🇱 Нидерланды',        section: 'vpn' },
-  { key: 'poland',        label: '🇵🇱 Польша',            section: 'vpn' },
-  { key: 'other',         label: '🌍 Остальные',           section: 'vpn' },
-  { key: 'w_baltics',     label: '🇱🇹🇪🇪🇱🇻 Прибалтика', section: 'white' },
-  { key: 'w_finland',     label: '🇫🇮 Финляндия',         section: 'white' },
-  { key: 'w_germany',     label: '🇩🇪 Германия',          section: 'white' },
-  { key: 'w_sweden',      label: '🇸🇪 Швеция',            section: 'white' },
-  { key: 'w_netherlands', label: '🇳🇱 Нидерланды',        section: 'white' },
-  { key: 'w_poland',      label: '🇵🇱 Польша',            section: 'white' },
-  { key: 'w_other',       label: '🌍 Остальные',           section: 'white' },
-  { key: 'russia',        label: '🇷🇺 Россия (Москва)',    section: 'white' },
+  { key: 'baltics', label: '🇱🇹🇪🇪🇱🇻 Прибалтика', section: 'vpn' },
+  { key: 'finland', label: '🇫🇮 Финляндия', section: 'vpn' },
+  { key: 'germany', label: '🇩🇪 Германия', section: 'vpn' },
+  { key: 'sweden', label: '🇸🇪 Швеция', section: 'vpn' },
+  { key: 'netherlands', label: '🇳🇱 Нидерланды', section: 'vpn' },
+  { key: 'poland', label: '🇵🇱 Польша', section: 'vpn' },
+  { key: 'france', label: '🇫🇷 Франция', section: 'vpn' },
+  { key: 'uk', label: '🇬🇧 Великобритания', section: 'vpn' },
+  { key: 'switzerland', label: '🇨🇭 Швейцария', section: 'vpn' },
+  { key: 'canada', label: '🇨🇦 Канада', section: 'vpn' },
+  { key: 'australia', label: '🇦🇺 Австралия', section: 'vpn' },
+  { key: 'brazil', label: '🇧🇷 Бразилия', section: 'vpn' },
+  { key: 'india', label: '🇮🇳 Индия', section: 'vpn' },
+  { key: 'south_africa', label: '🇿🇦 ЮАР', section: 'vpn' },
+  { key: 'uae', label: '🇦🇪 ОАЭ', section: 'vpn' },
+  { key: 'other', label: '🌍 Остальные', section: 'vpn' },
+  { key: 'w_baltics', label: '🇱🇹🇪🇪🇱🇻 Прибалтика', section: 'white' },
+  { key: 'w_finland', label: '🇫🇮 Финляндия', section: 'white' },
+  { key: 'w_germany', label: '🇩🇪 Германия', section: 'white' },
+  { key: 'w_sweden', label: '🇸🇪 Швеция', section: 'white' },
+  { key: 'w_netherlands', label: '🇳🇱 Нидерланды', section: 'white' },
+  { key: 'w_poland', label: '🇵🇱 Польша', section: 'white' },
+  { key: 'w_other', label: '🌍 Остальные', section: 'white' },
+  { key: 'russia', label: '🇷🇺 Россия (Москва)', section: 'white' },
 ];
 
 let currentMode = null;
 
 function makeCard(m) {
-  return '<div class="card" id="card-' + m.key + '" style="display:none">' +
-    '<h2>Лучший ключ — ' + m.label + '</h2>' +
-    '<div class="key-box empty" id="key-' + m.key + '">Загрузка...</div>' +
-    '<button class="copy-btn" id="btn-' + m.key + '" disabled onclick="copyKey(\'' + m.key + '\')">Копировать</button>' +
-    '<div class="top5" id="top5-' + m.key + '"></div>' +
-    '<div class="stats" id="stats-' + m.key + '"></div>' +
-    '</div>';
+  return `<div class="card" id="card-${m.key}" style="display:none">
+    <h2>⚡ Лучший ключ — ${m.label}</h2>
+    <div class="key-box empty" id="key-${m.key}">Загрузка...</div>
+    <button class="copy-btn" id="btn-${m.key}" disabled onclick="copyKey('${m.key}')">📋 Копировать</button>
+    <div class="top5" id="top5-${m.key}"></div>
+    <div class="stats" id="stats-${m.key}"></div>
+  </div>`;
 }
 
 function buildCards() {
-  const container = document.getElementById('cards');
-  container.innerHTML = MODES.map(makeCard).join('');
+  document.getElementById('cards').innerHTML = MODES.map(makeCard).join('');
 }
 
 function switchMode(mode) {
   currentMode = mode;
   document.querySelectorAll('.tab').forEach(t => {
-    const onclick = t.getAttribute('onclick');
-    t.classList.toggle('active', onclick === "switchMode('" + mode + "')");
+    t.classList.toggle('active', t.getAttribute('onclick') === `switchMode('${mode}')`);
   });
   MODES.forEach(m => {
-    document.getElementById('card-' + m.key).style.display = m.key === mode ? 'block' : 'none';
+    document.getElementById(`card-${m.key}`).style.display = m.key === mode ? 'block' : 'none';
   });
 }
 
@@ -55,7 +62,7 @@ async function loadData() {
     data = await resp.json();
     renderAll();
   } catch (e) {
-    document.getElementById('updated').textContent = 'Ошибка загрузки данных';
+    document.getElementById('updated').textContent = '❌ Ошибка загрузки данных';
   }
 }
 
@@ -71,24 +78,52 @@ function renderAll() {
       }
     } catch (e) {}
   }
-  document.getElementById('updated').textContent = 'Обновлено: ' + displayTime;
+  document.getElementById('updated').textContent = '🔄 Обновлено: ' + displayTime;
 
-  const emptyVpn = [];
-  const emptyWhite = [];
+  // Обновляем статистику
+  let totalKeys = 0, workingKeys = 0, totalLatency = 0, latencyCount = 0;
+  MODES.forEach(m => {
+    if (m.key === 'other') {
+      if (data.other_countries) {
+        Object.values(data.other_countries).forEach(c => {
+          totalKeys += c.total || 0;
+          workingKeys += c.total_working || 0;
+          if (c.best_info && c.best_info.latency_ms) {
+            totalLatency += c.best_info.latency_ms;
+            latencyCount++;
+          }
+        });
+      }
+    } else if (data[m.key]) {
+      totalKeys += data[m.key].total || 0;
+      workingKeys += data[m.key].total_working || 0;
+      if (data[m.key].best_info && data[m.key].best_info.latency_ms) {
+        totalLatency += data[m.key].best_info.latency_ms;
+        latencyCount++;
+      }
+    }
+  });
+  
+  document.getElementById('total-sources').textContent = '24';
+  document.getElementById('total-keys').textContent = totalKeys;
+  document.getElementById('working-keys').textContent = workingKeys;
+  document.getElementById('avg-speed').textContent = latencyCount ? Math.round(totalLatency / latencyCount) + ' мс' : '—';
+
+  const emptyVpn = [], emptyWhite = [];
   MODES.forEach(m => {
     try {
       if (m.key === 'other' ? data.other_countries : data[m.key]) render(m.key);
-    } catch (e) {
-      console.error('render error for', m.key, e);
-    }
+    } catch (e) {}
+    
     const hasKeys = m.key === 'other'
       ? data.other_countries && Object.values(data.other_countries).some(c => c.total_working > 0)
       : data[m.key] && data[m.key].total_working > 0;
+    
     const tabBtn = document.querySelector(
-      '#tabs-countries [onclick="switchMode(\'' + m.key + '\')"], ' +
-      '#tabs-white [onclick="switchMode(\'' + m.key + '\')"]'
+      `#tabs-countries [onclick="switchMode('${m.key}')"], #tabs-white [onclick="switchMode('${m.key}')"]`
     );
     if (!tabBtn) return;
+    
     if (hasKeys) {
       tabBtn.disabled = false;
       tabBtn.style.display = '';
@@ -113,8 +148,8 @@ function setupCollapsed(collapsedId, toggleId, labelId, emptyTabs) {
   const label = document.getElementById(labelId);
   collapsed.innerHTML = '';
   if (emptyTabs.length > 0) {
-    emptyTabs.forEach(btn => { collapsed.appendChild(btn); });
-    label.textContent = 'Нет ключей: ' + emptyTabs.length;
+    emptyTabs.forEach(btn => collapsed.appendChild(btn));
+    label.textContent = '📭 Нет ключей: ' + emptyTabs.length;
     toggle.style.display = 'flex';
   } else {
     toggle.style.display = 'none';
@@ -132,21 +167,21 @@ function toggleCollapsedWhite() {
 }
 
 function renderCountryBlock(name, d) {
-  const topList = d.top10 || d.top5 || [];
+  const topList = d.top10 || [];
   const flag = d.flag || '🌍';
-  let html = '<div class="country-block">';
-  html += '<h3 class="country-title">' + flag + ' ' + name + '<span class="country-stats"> · ' + d.total_working + ' из ' + d.total + '</span></h3>';
+  let html = `<div class="country-block">
+    <h3 class="country-title">${flag} ${name} <span class="country-stats">· ${d.total_working} из ${d.total}</span></h3>`;
   if (topList.length > 0) {
-    html += topList.map((k, i) =>
-      '<div class="top5-item">' +
-      '<span class="host">' + (i + 1) + '. ' + k.host + ':' + k.port + '</span>' +
-      '<span class="latency">' + k.latency_ms + ' мс</span>' +
-      (k.first_seen ? '<span class="uptime">в сети ' + formatUptime(k.first_seen) + '</span>' : '') +
-      '<button class="copy-small" onclick="copyText(\'' + encodeKey(k.key) + '\', this)">копировать</button>' +
-      '</div>'
-    ).join('');
+    html += topList.map((k, i) => `
+      <div class="top5-item">
+        <span class="host">${i+1}. ${k.host}:${k.port}</span>
+        <span class="latency">${k.latency_ms} мс</span>
+        ${k.first_seen ? `<span class="uptime">⏱ ${formatUptime(k.first_seen)}</span>` : ''}
+        <button class="copy-small" onclick="copyText('${encodeKey(k.key)}', this)">копировать</button>
+      </div>
+    `).join('');
   } else {
-    html += '<div class="top5-item"><span class="host">Нет рабочих ключей</span></div>';
+    html += `<div class="top5-item"><span class="host">Нет рабочих ключей</span></div>`;
   }
   html += '</div>';
   return html;
@@ -167,7 +202,7 @@ function render(mode) {
       .sort((a, b) => b[1].total_working - a[1].total_working);
     top5El.innerHTML = sorted.length > 0
       ? sorted.map(([name, c]) => renderCountryBlock(name, c)).join('')
-      : '<p>Нет рабочих ключей</p>';
+      : '<p style="text-align:center;color:#555;padding:20px;">Нет рабочих ключей в других странах</p>';
     return;
   }
 
@@ -179,24 +214,24 @@ function render(mode) {
     keyEl.classList.remove('empty');
     btnEl.disabled = false;
   } else {
-    keyEl.textContent = 'Рабочих ключей не найдено. Проверьте позже.';
+    keyEl.textContent = '😕 Рабочих ключей не найдено. Проверьте позже.';
     keyEl.classList.add('empty');
     btnEl.disabled = true;
   }
 
-  statsEl.textContent = 'Рабочих: ' + d.total_working + ' из ' + d.total;
+  statsEl.textContent = `📊 Рабочих: ${d.total_working} из ${d.total}`;
 
-  const topList = d.top10 || d.top5;
-  if (topList && topList.length >= 1) {
-    top5El.innerHTML = '<h3>ТОП-10 быстрых:</h3>' +
-      topList.map((k, i) =>
-        '<div class="top5-item">' +
-        '<span class="host">' + (i + 1) + '. ' + k.host + ':' + k.port + '</span>' +
-        '<span class="latency">' + k.latency_ms + ' мс</span>' +
-        (k.first_seen ? '<span class="uptime">в сети ' + formatUptime(k.first_seen) + '</span>' : '') +
-        '<button class="copy-small" onclick="copyText(\'' + encodeKey(k.key) + '\', this)">копировать</button>' +
-        '</div>'
-      ).join('');
+  const topList = d.top10 || [];
+  if (topList.length > 0) {
+    top5El.innerHTML = `<h3>🏆 ТОП-10 быстрых:</h3>` +
+      topList.map((k, i) => `
+        <div class="top5-item">
+          <span class="host">${i+1}. ${k.host}:${k.port}</span>
+          <span class="latency">${k.latency_ms} мс</span>
+          ${k.first_seen ? `<span class="uptime">⏱ ${formatUptime(k.first_seen)}</span>` : ''}
+          <button class="copy-small" onclick="copyText('${encodeKey(k.key)}', this)">копировать</button>
+        </div>
+      `).join('');
   } else {
     top5El.innerHTML = '';
   }
@@ -221,7 +256,18 @@ function copyKey(mode) {
 function copyText(text, btn) {
   navigator.clipboard.writeText(text).then(() => {
     const orig = btn.textContent;
-    btn.textContent = 'Скопировано!';
+    btn.textContent = '✅ Скопировано!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  }).catch(() => {
+    // Fallback для старых браузеров
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    textarea.remove();
+    const orig = btn.textContent;
+    btn.textContent = '✅ Скопировано!';
     setTimeout(() => btn.textContent = orig, 1500);
   });
 }

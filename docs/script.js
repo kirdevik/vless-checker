@@ -4,6 +4,7 @@ let updateInterval = null;
 let map = null;
 let favorites = JSON.parse(localStorage.getItem('favorites') || '{}');
 
+// ВСЕ СТРАНЫ (ВКЛЮЧАЯ ТЕ, ЧТО БЫЛИ В OTHER)
 const MODES = [
   {key:'baltics',label:'🇱🇹🇪🇪🇱🇻 Прибалтика',section:'vpn'},
   {key:'finland',label:'🇫🇮 Финляндия',section:'vpn'},
@@ -35,18 +36,16 @@ const MODES = [
   {key:'kenya',label:'🇰🇪 Кения',section:'vpn'},
   {key:'nigeria',label:'🇳🇬 Нигерия',section:'vpn'},
   {key:'new_zealand',label:'🇳🇿 Новая Зеландия',section:'vpn'},
-  {key:'other',label:'🌍 Остальные',section:'vpn'},
   {key:'w_baltics',label:'🇱🇹🇪🇪🇱🇻 Прибалтика',section:'white'},
   {key:'w_finland',label:'🇫🇮 Финляндия',section:'white'},
   {key:'w_germany',label:'🇩🇪 Германия',section:'white'},
   {key:'w_sweden',label:'🇸🇪 Швеция',section:'white'},
   {key:'w_netherlands',label:'🇳🇱 Нидерланды',section:'white'},
   {key:'w_poland',label:'🇵🇱 Польша',section:'white'},
-  {key:'w_other',label:'🌍 Остальные',section:'white'},
   {key:'russia',label:'🇷🇺 Россия (Москва)',section:'white'},
 ];
 
-// Координаты для карты
+// КООРДИНАТЫ ДЛЯ ВСЕХ СТРАН
 const COUNTRY_COORDS = {
   baltics: [56.9, 24.6],
   finland: [61.9, 25.7],
@@ -175,8 +174,9 @@ function initMap() {
     maxZoom: 19
   }).addTo(map);
   
-  // Добавляем маркеры для стран, где есть ключи
   let hasMarkers = false;
+  
+  // Показываем ВСЕ страны, где есть ключи
   MODES.forEach(m => {
     const coords = COUNTRY_COORDS[m.key];
     if (coords && data && data[m.key] && data[m.key].total_working > 0) {
@@ -204,7 +204,6 @@ function initMap() {
     }
   });
   
-  // Если нет ни одной точки — показываем сообщение
   if (!hasMarkers) {
     const popup = L.popup()
       .setLatLng([20, 10])
@@ -242,19 +241,7 @@ function renderAll() {
   const keyCounts = {};
 
   MODES.forEach(m => {
-    if (m.key === 'other') {
-      if (data.other_countries) {
-        Object.values(data.other_countries).forEach(c => {
-          totalKeys += c.total || 0;
-          workingKeys += c.total_working || 0;
-          keyCounts[m.key] = (keyCounts[m.key] || 0) + (c.total_working || 0);
-          if (c.best_info && c.best_info.latency_ms) {
-            totalLatency += c.best_info.latency_ms;
-            latencyCount++;
-          }
-        });
-      }
-    } else if (data[m.key]) {
+    if (data[m.key]) {
       totalKeys += data[m.key].total || 0;
       workingKeys += data[m.key].total_working || 0;
       keyCounts[m.key] = data[m.key].total_working || 0;
@@ -273,7 +260,6 @@ function renderAll() {
   document.getElementById('success-rate').textContent = successRate + '%';
   document.getElementById('avg-speed').textContent = latencyCount ? Math.round(totalLatency / latencyCount) + ' мс' : '—';
 
-  // График
   const bars = document.querySelectorAll('.chart-bar');
   const heights = [20, 45, 70, 55, 90, 65, 100];
   const workingPercent = Math.min(100, Math.round((workingKeys / Math.max(1, totalKeys)) * 100));
@@ -282,7 +268,6 @@ function renderAll() {
     bar.style.height = h + '%';
   });
 
-  // Количество ключей в вкладках
   document.querySelectorAll('.tab').forEach(tab => {
     const mode = tab.getAttribute('onclick').match(/'([^']+)'/)[1];
     const count = keyCounts[mode] || 0;
@@ -296,39 +281,13 @@ function renderAll() {
     }
   });
 
-  const emptyVpn = [], emptyWhite = [];
   MODES.forEach(m => {
     try {
-      if (m.key === 'other' ? data.other_countries : data[m.key]) render(m.key);
+      if (data[m.key]) render(m.key);
     } catch (e) {}
-
-    const hasKeys = m.key === 'other'
-      ? data.other_countries && Object.values(data.other_countries).some(c => c.total_working > 0)
-      : data[m.key] && data[m.key].total_working > 0;
-
-    const tabBtn = document.querySelector(
-      `#tabs-countries [onclick="switchMode('${m.key}')"], #tabs-white [onclick="switchMode('${m.key}')"]`
-    );
-    if (!tabBtn) return;
-
-    if (hasKeys) {
-      tabBtn.disabled = false;
-      tabBtn.style.display = '';
-    } else {
-      const clone = tabBtn.cloneNode(true);
-      clone.disabled = true;
-      clone.style.display = '';
-      if (m.section === 'vpn') emptyVpn.push(clone);
-      else emptyWhite.push(clone);
-      tabBtn.disabled = true;
-      tabBtn.style.display = 'none';
-    }
   });
-
-  setupCollapsed('tabs-collapsed', 'collapsed-toggle', 'collapsed-label', emptyVpn);
-  setupCollapsed('tabs-collapsed-white', 'collapsed-toggle-white', 'collapsed-label-white', emptyWhite);
   
-  // Обновляем карту с новыми данными
+  // Обновляем карту
   if (map) {
     map.eachLayer(layer => {
       if (layer instanceof L.CircleMarker) {
@@ -339,77 +298,11 @@ function renderAll() {
   initMap();
 }
 
-function setupCollapsed(collapsedId, toggleId, labelId, emptyTabs) {
-  const collapsed = document.getElementById(collapsedId);
-  const toggle = document.getElementById(toggleId);
-  const label = document.getElementById(labelId);
-  collapsed.innerHTML = '';
-  if (emptyTabs.length > 0) {
-    emptyTabs.forEach(btn => collapsed.appendChild(btn));
-    label.textContent = '📭 Нет ключей: ' + emptyTabs.length;
-    toggle.style.display = 'flex';
-  } else {
-    toggle.style.display = 'none';
-  }
-}
-
-function toggleCollapsed() {
-  document.getElementById('collapsed-toggle').classList.toggle('open');
-  document.getElementById('tabs-collapsed').classList.toggle('open');
-}
-
-function toggleCollapsedWhite() {
-  document.getElementById('collapsed-toggle-white').classList.toggle('open');
-  document.getElementById('tabs-collapsed-white').classList.toggle('open');
-}
-
-function renderCountryBlock(name, d) {
-  const topList = d.top10 || [];
-  const flag = d.flag || '🌍';
-  let html = `<div class="country-block">
-    <h3 class="country-title">${flag} ${name} <span class="country-stats">· ${d.total_working} из ${d.total}</span></h3>`;
-  if (topList.length > 0) {
-    html += topList.map((k, i) => {
-      const protocol = detectProtocol(k.key);
-      const tlsValid = checkTLS(k.key);
-      const isFavorite = favorites[k.key] || false;
-      return `<div class="top5-item" id="item-${i}">
-        <span class="host">${i+1}. ${k.host}:${k.port}</span>
-        <span class="protocol">${protocol}</span>
-        <span class="latency">${k.latency_ms} мс</span>
-        ${k.first_seen ? `<span class="uptime">⏱ ${formatUptime(k.first_seen)}</span>` : ''}
-        <span class="tls-status">${tlsValid === true ? '🔒' : tlsValid === false ? '⚠️' : ''}</span>
-        <button class="favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${encodeKey(k.key)}', this)">${isFavorite ? '★' : '☆'}</button>
-        <button class="copy-small" onclick="copyText('${encodeKey(k.key)}', this)">копировать</button>
-        <button class="share-btn" onclick="shareKey('${encodeKey(k.key)}')">📤</button>
-        <button class="ping-btn" onclick="pingKey('${encodeKey(k.key)}', this)">📡</button>
-      </div>`;
-    }).join('');
-  } else {
-    html += `<div class="top5-item"><span class="host">Нет рабочих ключей</span></div>`;
-  }
-  html += '</div>';
-  return html;
-}
-
 function render(mode) {
   const keyEl = document.getElementById('key-' + mode);
   const btnEl = document.getElementById('btn-' + mode);
   const top5El = document.getElementById('top5-' + mode);
   const statsEl = document.getElementById('stats-' + mode);
-
-  if (mode === 'other' && data.other_countries) {
-    keyEl.style.display = 'none';
-    btnEl.style.display = 'none';
-    statsEl.style.display = 'none';
-    const sorted = Object.entries(data.other_countries)
-      .filter(([, c]) => c.total_working > 0)
-      .sort((a, b) => b[1].total_working - a[1].total_working);
-    top5El.innerHTML = sorted.length > 0
-      ? sorted.map(([name, c]) => renderCountryBlock(name, c)).join('')
-      : '<p style="text-align:center;color:#555;padding:20px;">Нет рабочих ключей в других странах</p>';
-    return;
-  }
 
   const d = data[mode];
   if (!d) return;
@@ -579,84 +472,13 @@ function copyAllKeys() {
   
   let allKeys = [];
   MODES.forEach(m => {
-    if (m.key === 'other' && data.other_countries) {
-      Object.values(data.other_countries).forEach(c => {
-        if (c.best) allKeys.push(c.best);
-      });
-    } else if (data[m.key] && data[m.key].best) {
+    if (data[m.key] && data[m.key].best) {
       allKeys.push(data[m.key].best);
     }
   });
   
   const text = allKeys.join('\n\n');
   copyText(text, document.createElement('button'));
-}
-
-function exportKeys() {
-  if (!data) {
-    alert('Данные ещё не загружены');
-    return;
-  }
-  
-  let allKeys = [];
-  MODES.forEach(m => {
-    if (m.key === 'other' && data.other_countries) {
-      Object.values(data.other_countries).forEach(c => {
-        if (c.best) allKeys.push(c.best);
-      });
-    } else if (data[m.key] && data[m.key].best) {
-      allKeys.push(data[m.key].best);
-    }
-  });
-  
-  const text = allKeys.join('\n\n');
-  const blob = new Blob([text], { type: 'text/plain' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'vless_keys.txt';
-  a.click();
-}
-
-function exportClash() {
-  if (!data) {
-    alert('Данные ещё не загружены');
-    return;
-  }
-  
-  let proxies = [];
-  MODES.forEach(m => {
-    if (m.key === 'other' && data.other_countries) {
-      Object.values(data.other_countries).forEach(c => {
-        if (c.best) proxies.push(c.best);
-      });
-    } else if (data[m.key] && data[m.key].best) {
-      proxies.push(data[m.key].best);
-    }
-  });
-  
-  let clashConfig = {
-    'proxies': proxies.map((key, i) => {
-      const parsed = parseKey(key);
-      return {
-        'name': `VLESS-${i+1}`,
-        'type': 'vless',
-        'server': parsed ? parsed.host : 'unknown',
-        'port': parsed ? parsed.port : 443,
-        'uuid': key.match(/vless:\/\/([^@]+)@/)?.[1] || '',
-        'flow': 'xtls-rprx-vision',
-        'tls': true,
-        'servername': key.match(/sni=([^&]+)/)?.[1] || '',
-        'udp': true,
-      };
-    })
-  };
-  
-  const text = JSON.stringify(clashConfig, null, 2);
-  const blob = new Blob([text], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'clash_config.json';
-  a.click();
 }
 
 function forceUpdate() {
@@ -679,32 +501,8 @@ function forceUpdate() {
   });
 }
 
-function applyFilters() {
-  const countryFilter = document.getElementById('country-filter').value;
-  const protocolFilter = document.getElementById('protocol-filter').value;
-  const speedFilter = document.getElementById('speed-filter').value;
-  const searchQuery = document.getElementById('search-input').value.toLowerCase();
-  
-  document.querySelectorAll('.tab').forEach(tab => {
-    const mode = tab.getAttribute('onclick').match(/'([^']+)'/)?.[1] || '';
-    const label = tab.textContent.toLowerCase();
-    let show = true;
-    
-    if (searchQuery && !label.includes(searchQuery) && !mode.includes(searchQuery)) {
-      show = false;
-    }
-    
-    if (countryFilter !== 'all' && mode !== countryFilter && !mode.includes('w_')) {
-      show = false;
-    }
-    
-    tab.style.display = show ? '' : 'none';
-  });
-}
-
 function showQR(key) {
   const overlay = document.createElement('div');
-  overlay.className = 'qr-overlay';
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:9999;';
   overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
 

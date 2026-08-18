@@ -16,7 +16,18 @@ body {
   margin: 0 auto;
 }
 
-/* ===== БРЕНД СВЕРХУ — Kirdevik VLESS Checker ===== */
+/* ===== БРЕНД СВЕРХУ — КЛИКАБЕЛЬНЫЙ ===== */
+.brand-link {
+  display: block;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.brand-link:hover {
+  opacity: 0.8;
+}
+
 .brand {
   text-align: center;
   padding: 16px 0 12px 0;
@@ -53,6 +64,23 @@ body {
   vertical-align: middle;
 }
 
+.live-badge {
+  font-size: 0.5rem;
+  background: #22c55e;
+  color: #fff;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  vertical-align: middle;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
 .brand-subtitle {
   font-size: 0.7rem;
   color: #555;
@@ -60,7 +88,7 @@ body {
   letter-spacing: 0.04em;
 }
 
-/* ===== ОСТАЛЬНЫЕ СТИЛИ ===== */
+/* ===== СТАТИСТИКА ===== */
 header {
   text-align: center;
   margin-bottom: 16px;
@@ -73,7 +101,7 @@ header {
 
 .stats-bar {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 8px;
   background: #14141c;
   border: 1px solid #222;
@@ -94,7 +122,7 @@ header {
 }
 
 .stat-label {
-  font-size: 0.55rem;
+  font-size: 0.5rem;
   color: #555;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -154,7 +182,7 @@ header {
   color: #94a3b8;
 }
 
-/* ===== ФИЛЬТРЫ — ВСЕ ОДИНАКОВОГО РАЗМЕРА! ===== */
+/* ===== ФИЛЬТРЫ ===== */
 .filters {
   display: flex;
   gap: 8px;
@@ -168,8 +196,8 @@ header {
 .filters input,
 .filters .export-btn {
   flex: 1;
-  min-width: 130px;
-  max-width: 220px;
+  min-width: 120px;
+  max-width: 200px;
   padding: 6px 12px;
   background: #14141c;
   border: 1px solid #222;
@@ -212,6 +240,7 @@ header {
   justify-content: center;
   min-width: 100px;
   white-space: nowrap;
+  font-size: 0.7rem;
 }
 
 .filters .export-btn:hover {
@@ -246,6 +275,13 @@ header {
   cursor: pointer;
   font-size: 0.7rem;
   transition: 0.2s;
+  position: relative;
+}
+
+.tab .key-count {
+  font-size: 0.55rem;
+  color: #555;
+  margin-left: 4px;
 }
 
 .tab:hover:not(:disabled) {
@@ -257,6 +293,10 @@ header {
   background: #2563eb;
   border-color: #2563eb;
   color: #fff;
+}
+
+.tab.active .key-count {
+  color: rgba(255,255,255,0.7);
 }
 
 .tab:disabled {
@@ -358,6 +398,15 @@ header {
   white-space: nowrap;
 }
 
+.top5-item .protocol {
+  color: #8b5cf6;
+  font-size: 0.55rem;
+  flex-shrink: 0;
+  background: rgba(139, 92, 246, 0.1);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
 .top5-item .latency {
   color: #4ade80;
   flex-shrink: 0;
@@ -365,7 +414,7 @@ header {
 
 .top5-item .uptime {
   color: #555;
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   flex-shrink: 0;
 }
 
@@ -376,11 +425,29 @@ header {
   border-radius: 4px;
   padding: 2px 8px;
   cursor: pointer;
-  font-size: 0.6rem;
+  font-size: 0.55rem;
   flex-shrink: 0;
+  transition: 0.2s;
 }
 
 .copy-small:hover {
+  border-color: #2563eb;
+  color: #ccc;
+}
+
+.share-btn {
+  background: none;
+  border: 1px solid #333;
+  color: #666;
+  border-radius: 4px;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-size: 0.55rem;
+  flex-shrink: 0;
+  transition: 0.2s;
+}
+
+.share-btn:hover {
   border-color: #2563eb;
   color: #ccc;
 }
@@ -491,38 +558,37 @@ footer a:hover {
   color: #888;
 }
 
-/* ===== АДАПТИВ ===== */
 @media (max-width: 480px) {
   body {
     padding: 12px 8px 40px;
   }
-  
+
   .brand-title {
     font-size: 1.2rem;
   }
-  
+
   .brand-subtitle {
     font-size: 0.6rem;
   }
-  
+
   .stats-bar {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
-  
+
   .tab {
     font-size: 0.6rem;
     padding: 4px 8px;
   }
-  
+
   .card {
     padding: 12px;
   }
-  
+
   .top5-item {
     font-size: 0.6rem;
     flex-wrap: wrap;
   }
-  
+
   .filters select,
   .filters input,
   .filters .export-btn {

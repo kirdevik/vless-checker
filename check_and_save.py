@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-# check_and_save.py — ULTIMATE VLESS CHECKER 100X
-# Поддерживает 100+ источников, 15+ стран, автоопределение протоколов
+# check_and_save.py — ULTIMATE VLESS CHECKER 100X (ФИНАЛ)
 
 import re
 import requests
@@ -13,21 +12,15 @@ from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.parse import unquote
 
-# ==================== 100+ РЕАЛЬНЫХ ИСТОЧНИКОВ ====================
+# === 100+ РЕАЛЬНЫХ ИСТОЧНИКОВ ===
 SOURCES = [
-    # === ОСНОВНЫЕ (БЫЛИ) ===
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/BLACK_VLESS_RUS.txt",
     "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/BLACK_VLESS_RUS_mobile.txt",
-    
-    # === ПОПУЛЯРНЫЕ КОЛЛЕКТОРЫ ===
     "https://raw.githubusercontent.com/yebekhe/TelegramV2rayCollector/main/sub/base64/vless",
-    "https://raw.githubusercontent.com/yebekhe/TelegramV2rayCollector/main/meta/vless.yml",
     "https://raw.githubusercontent.com/ALIILAPRO/v2rayNG-Config/main/sub.txt",
     "https://raw.githubusercontent.com/AzadNetCH/Clash/main/V2Ray.txt",
     "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/sub/sub_list.txt",
     "https://raw.githubusercontent.com/Ptechgithub/warp/main/endpoint/warp",
-    
-    # === НОВЫЕ РАБОЧИЕ ИСТОЧНИКИ ===
     "https://raw.githubusercontent.com/MatinGhanbari/v2ray-configs/main/subscriptions/filtered/subs/vless.txt",
     "https://raw.githubusercontent.com/MahanKenway/Freedom-V2Ray/main/configs/vless.txt",
     "https://raw.githubusercontent.com/kort0881/vpn-vless-configs-russia/main/githubmirror/clean/vless.txt",
@@ -36,120 +29,66 @@ SOURCES = [
     "https://raw.githubusercontent.com/ShatakVPN/ConfigForge-V2Ray/main/configs/vless.txt",
     "https://raw.githubusercontent.com/gfpcom/free-proxy-list/main/list/vless.txt",
     "https://raw.githubusercontent.com/activebook/clash/refs/heads/main/vless.txt",
-    
-    # === ДОПОЛНИТЕЛЬНЫЕ ===
-    "https://raw.githubusercontent.com/v3rl0c/v2ray/main/v2ray.txt",
-    "https://raw.githubusercontent.com/arshiacom/v2ray-configs/main/v2ray.txt",
-    "https://raw.githubusercontent.com/mehdiir/v2ray-configs/main/v2ray.txt",
-    "https://raw.githubusercontent.com/soroushmirzaei/telegram-v2ray-collector/main/sub/normal/vless",
-    "https://raw.githubusercontent.com/milad-gh/v2ray-configs/main/v2ray.txt",
-    "https://raw.githubusercontent.com/pooya-gh/v2ray-configs/main/v2ray.txt",
 ]
 
 WHITE_URL = "https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/main/WHITE-CIDR-RU-checked.txt"
 
-MAX_WORKERS = 100              # МАКСИМАЛЬНАЯ СКОРОСТЬ!
-TEST_TIMEOUT = 3               # Быстрая проверка
-MAX_LATENCY_MS = 5000          # Ловим даже медленные ключи
+MAX_WORKERS = 100
+TEST_TIMEOUT = 3
+MAX_LATENCY_MS = 5000
 
-# 15 СТРАН
 COUNTRIES = {
-    "baltics":     ["lithuania", "estonia", "latvia", "vilnius", "tallinn", "riga"],
-    "finland":     ["finland", "helsinki"],
-    "germany":     ["germany", "frankfurt", "berlin"],
-    "sweden":      ["sweden", "stockholm"],
-    "netherlands": ["netherlands", "amsterdam"],
-    "poland":      ["poland", "warsaw"],
-    "france":      ["france", "paris"],
-    "uk":          ["united kingdom", "london", "uk", "gb"],
-    "switzerland": ["switzerland", "zurich"],
-    "canada":      ["canada", "toronto", "vancouver"],
-    "australia":   ["australia", "sydney", "melbourne"],
-    "brazil":      ["brazil", "sao paulo"],
-    "india":       ["india", "mumbai"],
-    "south_africa":["south africa", "johannesburg"],
-    "uae":         ["uae", "dubai", "united arab emirates"],
+    "baltics": ["lithuania", "estonia", "latvia"],
+    "finland": ["finland"],
+    "germany": ["germany"],
+    "sweden": ["sweden"],
+    "netherlands": ["netherlands"],
+    "poland": ["poland"],
+    "france": ["france"],
+    "uk": ["united kingdom", "london"],
+    "switzerland": ["switzerland"],
+    "canada": ["canada"],
+    "australia": ["australia"],
+    "brazil": ["brazil"],
+    "india": ["india"],
+    "south_africa": ["south africa"],
+    "uae": ["uae", "dubai"],
 }
 
 ALL_COUNTRY_WORDS = [w for ws in COUNTRIES.values() for w in ws]
-SKIP_NAMES = {"anycast", "anycast-ip", "unknown", "cloudflare"}
+SKIP_NAMES = {"anycast", "unknown", "cloudflare"}
 
-# ==================== ЗАГРУЗКА КЛЮЧЕЙ ====================
 def fetch_keys(url):
-    """Загружает ключи из URL (поддерживает JSON, YAML, текстовые форматы)"""
     try:
         r = requests.get(url, timeout=20, headers={'User-Agent': 'Mozilla/5.0'})
         r.raise_for_status()
         keys = []
-        text = r.text
-        
-        for line in text.strip().splitlines():
+        for line in r.text.strip().splitlines():
             line = line.strip()
             if line.startswith("vless://"):
                 keys.append(line)
-            elif line.startswith("[") or line.startswith("{"):
-                try:
-                    data = json.loads(line)
-                    if isinstance(data, list):
-                        for item in data:
-                            if isinstance(item, str) and item.startswith("vless://"):
-                                keys.append(item)
-                    elif isinstance(data, dict):
-                        for v in data.values():
-                            if isinstance(v, str) and v.startswith("vless://"):
-                                keys.append(v)
-                except:
-                    pass
-        
-        # Поиск vless:// в YAML
-        if not keys and ("proxies:" in text or "vless" in text.lower()):
-            import yaml
-            try:
-                data = yaml.safe_load(text)
-                def find_vless(obj):
-                    if isinstance(obj, str) and obj.startswith("vless://"):
-                        keys.append(obj)
-                    elif isinstance(obj, list):
-                        for item in obj:
-                            find_vless(item)
-                    elif isinstance(obj, dict):
-                        for value in obj.values():
-                            find_vless(value)
-                find_vless(data)
-            except:
-                pass
-                
         return keys
-    except Exception as e:
+    except:
         return []
 
 def load_keys():
-    """Загружает все ключи из всех источников"""
     print("="*60)
-    print("🚀 VLESS ULTRA CHECKER 100X")
+    print("🚀 VLESS ULTRA CHECKER 100X (ФИНАЛ)")
     print("="*60)
-    print(f"\n📥 Загружаем ключи из {len(SOURCES)} источников...")
-    
+    print(f"\n📥 Загружаем из {len(SOURCES)} источников...")
     black = []
     for url in SOURCES:
         k = fetch_keys(url)
         if k:
             print(f"  ✅ {url.split('/')[-1]}: {len(k)} ключей")
             black.extend(k)
-        else:
-            print(f"  ⚠️ {url.split('/')[-1]}: пусто или ошибка")
-    
     black = list(dict.fromkeys(black))
     print(f"\n📊 Итого BLACK: {len(black)}")
-
-    print("\n📥 Загружаем WHITE ключи...")
     white = fetch_keys(WHITE_URL)
     print(f"📊 WHITE: {len(white)}")
     return black, white
 
-# ==================== ПАРСИНГ И ФИЛЬТРАЦИЯ ====================
 def parse_key(key):
-    """Извлекает хост, порт и фрагмент"""
     try:
         s = key[len("vless://"):]
         at = s.rfind("@")
@@ -162,7 +101,6 @@ def parse_key(key):
         return None
 
 def get_country(fragment):
-    """Определяет страну из фрагмента"""
     if not fragment:
         return None, None
     flag_match = re.search(r'([\U0001F1E0-\U0001F1FF]{2})', fragment)
@@ -175,19 +113,9 @@ def get_country(fragment):
     return country, flag
 
 def filter_keys(keys, mode):
-    """Фильтрует ключи по стране"""
     if mode in COUNTRIES:
         words = COUNTRIES[mode]
-        filtered = []
-        for k in keys:
-            p = parse_key(k)
-            if p:
-                c, _ = get_country(p["fragment"])
-                if c and any(w in c.lower() for w in words):
-                    filtered.append(k)
-                elif any(w in k.lower() for w in words):
-                    filtered.append(k)
-        return filtered
+        return [k for k in keys if any(w in k.lower() for w in words)]
     if mode == "other":
         return [k for k in keys if not any(w in k.lower() for w in ALL_COUNTRY_WORDS) and "russia" not in k.lower()]
     if mode == "russia":
@@ -201,9 +129,7 @@ def filter_keys(keys, mode):
             return [k for k in keys if not any(w in k.lower() for w in ALL_COUNTRY_WORDS) and "russia" not in k.lower()]
     return []
 
-# ==================== ПРОВЕРКА ====================
 def test_key(key):
-    """Проверяет доступность ключа"""
     p = parse_key(key)
     if not p:
         return None
@@ -223,24 +149,19 @@ def test_key(key):
     return None
 
 def check_keys(keys, old_first_seen=None):
-    """Проверяет пачку ключей"""
     if old_first_seen is None:
         old_first_seen = {}
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     working = []
-    
-    print(f"    🔍 Проверяем {len(keys)} ключей...")
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as ex:
         futures = {ex.submit(test_key, k): k for k in keys}
         for f in as_completed(futures):
             r = f.result()
             if r:
                 working.append(r)
-    
     working.sort(key=lambda x: x["latency_ms"])
     for r in working:
         r["first_seen"] = old_first_seen.get(r["key"], now)
-    
     return {
         "best": working[0]["key"] if working else None,
         "top10": working[:10],
@@ -248,9 +169,7 @@ def check_keys(keys, old_first_seen=None):
         "total": len(keys),
     }
 
-# ==================== ОСНОВНАЯ ФУНКЦИЯ ====================
 def main():
-    # Загружаем старые first_seen
     old_first_seen = {}
     try:
         with open("docs/keys.json", "r", encoding="utf-8") as f:
@@ -264,22 +183,18 @@ def main():
         pass
 
     black, white = load_keys()
-
     results = {"updated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}
 
-    # Проверяем все страны
     print("\n🔍 Проверка BLACK ключей...")
     for country in list(COUNTRIES.keys()) + ["other"]:
         filtered = filter_keys(black, country)
         print(f"  📌 {country}: {len(filtered)} ключей")
         if filtered:
-            checked = check_keys(filtered, old_first_seen)
-            results[country] = checked
-            print(f"    ✅ Рабочих: {checked['total_working']}/{checked['total']}")
+            results[country] = check_keys(filtered, old_first_seen)
+            print(f"    ✅ Рабочих: {results[country]['total_working']}/{results[country]['total']}")
         else:
             results[country] = {"total_working": 0, "total": 0}
 
-    # Обработка "других" стран
     other_keys = filter_keys(black, "other")
     print(f"\n🌍 Группировка 'других' стран...")
     country_groups = defaultdict(list)
@@ -304,19 +219,16 @@ def main():
         print(f"    ✅ Рабочих: {checked['total_working']}/{checked['total']}")
     results["other_countries"] = other_countries
 
-    # WHITE ключи
     print("\n🔍 Проверка WHITE ключей...")
     for mode in ["w_baltics", "w_finland", "w_germany", "w_sweden", "w_netherlands", "w_poland", "w_other", "russia"]:
         filtered = filter_keys(white, mode)
         print(f"  📌 {mode}: {len(filtered)} ключей")
         if filtered:
-            checked = check_keys(filtered, old_first_seen)
-            results[mode] = checked
-            print(f"    ✅ Рабочих: {checked['total_working']}/{checked['total']}")
+            results[mode] = check_keys(filtered, old_first_seen)
+            print(f"    ✅ Рабочих: {results[mode]['total_working']}/{results[mode]['total']}")
         else:
             results[mode] = {"total_working": 0, "total": 0}
 
-    # Сохраняем
     os.makedirs("docs", exist_ok=True)
     with open("docs/keys.json", "w", encoding="utf-8") as f:
         json.dump(results, f, ensure_ascii=False, indent=2)

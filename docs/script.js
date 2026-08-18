@@ -2,6 +2,7 @@ const KEYS_URL = 'keys.json';
 let data = null;
 let currentFilter = 'all';
 let searchQuery = '';
+let updateInterval = null;
 
 const MODES = [
   {key:'baltics',label:'🇱🇹🇪🇪🇱🇻 Прибалтика',section:'vpn'},
@@ -29,6 +30,14 @@ const MODES = [
   {key:'w_other',label:'🌍 Остальные',section:'white'},
   {key:'russia',label:'🇷🇺 Россия (Москва)',section:'white'},
 ];
+
+function detectProtocol(key) {
+  if (key.includes('security=reality') || key.includes('pbk=')) return 'Reality';
+  if (key.includes('type=ws') || key.includes('type=websocket')) return 'WebSocket';
+  if (key.includes('type=grpc')) return 'gRPC';
+  if (key.includes('type=tcp') || key.includes('flow=xtls')) return 'TCP';
+  return 'Unknown';
+}
 
 function makeCard(m) {
   return `<div class="card" id="card-${m.key}" style="display:none">
@@ -60,9 +69,21 @@ async function loadData() {
     if (!resp.ok) throw new Error('Ошибка загрузки');
     data = await resp.json();
     renderAll();
+    startUpdateTimer();
   } catch (e) {
     document.getElementById('updated').textContent = '❌ Ошибка загрузки данных';
   }
+}
+
+function startUpdateTimer() {
+  if (updateInterval) clearInterval(updateInterval);
+  updateInterval = setInterval(() => {
+    const now = new Date();
+    const nextUpdate = new Date(now);
+    nextUpdate.setMinutes(Math.ceil(now.getMinutes() / 30) * 30);
+    const diff = Math.round((nextUpdate - now) / 60000);
+    document.getElementById('next-update').textContent = diff + ' мин';
+  }, 10000);
 }
 
 function renderAll() {
@@ -80,12 +101,15 @@ function renderAll() {
   document.getElementById('updated').textContent = '🔄 Обновлено: ' + displayTime;
 
   let totalKeys = 0, workingKeys = 0, totalLatency = 0, latencyCount = 0;
+  const keyCounts = {};
+
   MODES.forEach(m => {
     if (m.key === 'other') {
       if (data.other_countries) {
         Object.values(data.other_countries).forEach(c => {
           totalKeys += c.total || 0;
           workingKeys += c.total_working || 0;
+          keyCounts[m.key] = (keyCounts[m.key] || 0) + (c.total_working || 0);
           if (c.best_info && c.best_info.latency_ms) {
             totalLatency += c.best_info.latency_ms;
             latencyCount++;
@@ -95,6 +119,7 @@ function renderAll() {
     } else if (data[m.key]) {
       totalKeys += data[m.key].total || 0;
       workingKeys += data[m.key].total_working || 0;
+      keyCounts[m.key] = data[m.key].total_working || 0;
       if (data[m.key].best_info && data[m.key].best_info.latency_ms) {
         totalLatency += data[m.key].best_info.latency_ms;
         latencyCount++;
@@ -102,26 +127,40 @@ function renderAll() {
     }
   });
 
-  document.getElementById('total-sources').textContent = '15+';
+  document.getElementById('total-sources').textContent = '40+';
   document.getElementById('total-keys').textContent = totalKeys;
   document.getElementById('working-keys').textContent = workingKeys;
   document.getElementById('avg-speed').textContent = latencyCount ? Math.round(totalLatency / latencyCount) + ' мс' : '—';
+
+  // Обновляем количество ключей в вкладках
+  document.querySelectorAll('.tab').forEach(tab => {
+    const mode = tab.getAttribute('onclick').match(/'([^']+)'/)[1];
+    const count = keyCounts[mode] || 0;
+    const existingCount = tab.querySelector('.key-count');
+    if (existingCount) existingCount.remove();
+    if (count > 0) {
+      const span = document.createElement('span');
+      span.className = 'key-count';
+      span.textContent = `(${count})`;
+      tab.appendChild(span);
+    }
+  });
 
   const emptyVpn = [], emptyWhite = [];
   MODES.forEach(m => {
     try {
       if (m.key === 'other' ? data.other_countries : data[m.key]) render(m.key);
     } catch (e) {}
-    
+
     const hasKeys = m.key === 'other'
       ? data.other_countries && Object.values(data.other_countries).some(c => c.total_working > 0)
       : data[m.key] && data[m.key].total_working > 0;
-    
+
     const tabBtn = document.querySelector(
       `#tabs-countries [onclick="switchMode('${m.key}')"], #tabs-white [onclick="switchMode('${m.key}')"]`
     );
     if (!tabBtn) return;
-    
+
     if (hasKeys) {
       tabBtn.disabled = false;
       tabBtn.style.display = '';
@@ -170,14 +209,17 @@ function renderCountryBlock(name, d) {
   let html = `<div class="country-block">
     <h3 class="country-title">${flag} ${name} <span class="country-stats">· ${d.total_working} из ${d.total}</span></h3>`;
   if (topList.length > 0) {
-    html += topList.map((k, i) => `
-      <div class="top5-item">
+    html += topList.map((k, i) => {
+      const protocol = detectProtocol(k.key);
+      return `<div class="top5-item">
         <span class="host">${i+1}. ${k.host}:${k.port}</span>
+        <span class="protocol">${protocol}</span>
         <span class="latency">${k.latency_ms} мс</span>
         ${k.first_seen ? `<span class="uptime">⏱ ${formatUptime(k.first_seen)}</span>` : ''}
         <button class="copy-small" onclick="copyText('${encodeKey(k.key)}', this)">копировать</button>
-      </div>
-    `).join('');
+        <button class="share-btn" onclick="shareKey('${encodeKey(k.key)}')">📤</button>
+      </div>`;
+    }).join('');
   } else {
     html += `<div class="top5-item"><span class="host">Нет рабочих ключей</span></div>`;
   }
@@ -222,14 +264,17 @@ function render(mode) {
   const topList = d.top10 || [];
   if (topList.length > 0) {
     top5El.innerHTML = `<h3>🏆 ТОП-10 быстрых:</h3>` +
-      topList.map((k, i) => `
-        <div class="top5-item">
+      topList.map((k, i) => {
+        const protocol = detectProtocol(k.key);
+        return `<div class="top5-item">
           <span class="host">${i+1}. ${k.host}:${k.port}</span>
+          <span class="protocol">${protocol}</span>
           <span class="latency">${k.latency_ms} мс</span>
           ${k.first_seen ? `<span class="uptime">⏱ ${formatUptime(k.first_seen)}</span>` : ''}
           <button class="copy-small" onclick="copyText('${encodeKey(k.key)}', this)">копировать</button>
-        </div>
-      `).join('');
+          <button class="share-btn" onclick="shareKey('${encodeKey(k.key)}')">📤</button>
+        </div>`;
+      }).join('');
   } else {
     top5El.innerHTML = '';
   }
@@ -269,6 +314,90 @@ function copyText(text, btn) {
   });
 }
 
+function shareKey(key) {
+  if (navigator.share) {
+    navigator.share({
+      title: 'VLESS ключ',
+      text: key,
+    }).catch(() => {});
+  } else {
+    copyText(key, document.createElement('button'));
+  }
+}
+
+function copyAllKeys() {
+  if (!data) {
+    alert('Данные ещё не загружены');
+    return;
+  }
+  
+  let allKeys = [];
+  MODES.forEach(m => {
+    if (m.key === 'other' && data.other_countries) {
+      Object.values(data.other_countries).forEach(c => {
+        if (c.best) allKeys.push(c.best);
+      });
+    } else if (data[m.key] && data[m.key].best) {
+      allKeys.push(data[m.key].best);
+    }
+  });
+  
+  const text = allKeys.join('\n\n');
+  copyText(text, document.createElement('button'));
+}
+
+function exportKeys() {
+  if (!data) {
+    alert('Данные ещё не загружены');
+    return;
+  }
+  
+  let allKeys = [];
+  MODES.forEach(m => {
+    if (m.key === 'other' && data.other_countries) {
+      Object.values(data.other_countries).forEach(c => {
+        if (c.best) allKeys.push(c.best);
+      });
+    } else if (data[m.key] && data[m.key].best) {
+      allKeys.push(data[m.key].best);
+    }
+  });
+  
+  const text = allKeys.join('\n\n');
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'vless_keys.txt';
+  a.click();
+}
+
+function forceUpdate() {
+  const btn = document.querySelector('.refresh-btn');
+  btn.textContent = '⏳ Обновление...';
+  btn.disabled = true;
+  
+  fetch('https://api.github.com/repos/kirdevik/vless-checker/actions/workflows/check_keys.yml/dispatches', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/vnd.github.v3+json',
+      'Authorization': 'token ' + (localStorage.getItem('github_token') || '')
+    },
+    body: JSON.stringify({ ref: 'main' })
+  }).then(() => {
+    btn.textContent = '✅ Запущено!';
+    setTimeout(() => {
+      btn.textContent = '🔄 Обновить всё';
+      btn.disabled = false;
+    }, 3000);
+  }).catch(() => {
+    btn.textContent = '❌ Ошибка';
+    setTimeout(() => {
+      btn.textContent = '🔄 Обновить всё';
+      btn.disabled = false;
+    }, 3000);
+  });
+}
+
 function showQR(key) {
   const qrContainer = document.createElement('div');
   qrContainer.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:1000;';
@@ -300,31 +429,6 @@ function showQR(key) {
   document.head.appendChild(script);
 }
 
-function exportKeys() {
-  if (!data) {
-    alert('Данные ещё не загружены');
-    return;
-  }
-  
-  let allKeys = [];
-  MODES.forEach(m => {
-    if (m.key === 'other' && data.other_countries) {
-      Object.values(data.other_countries).forEach(c => {
-        if (c.best) allKeys.push(c.best);
-      });
-    } else if (data[m.key] && data[m.key].best) {
-      allKeys.push(data[m.key].best);
-    }
-  });
-  
-  const text = allKeys.join('\n\n');
-  const blob = new Blob([text], { type: 'text/plain' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'vless_keys.txt';
-  a.click();
-}
-
 function applyFilters() {
   currentFilter = document.getElementById('protocol-filter').value;
   searchQuery = document.getElementById('search-input').value.toLowerCase();
@@ -339,15 +443,19 @@ function applyFilters() {
   });
 }
 
+// Добавляем QR-кнопки ко всем ключам автоматически
 document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.copy-small').forEach(btn => {
-    const key = btn.getAttribute('onclick').match(/'([^']+)'/)[1];
-    btn.parentElement.appendChild(Object.assign(document.createElement('button'), {
-      textContent: '📱 QR',
-      className: 'copy-small',
-      onclick: () => showQR(key),
-      style: 'margin-left:4px;'
-    }));
+    const match = btn.getAttribute('onclick').match(/'([^']+)'/);
+    if (match) {
+      const key = match[1];
+      const qrBtn = document.createElement('button');
+      qrBtn.textContent = '📱 QR';
+      qrBtn.className = 'copy-small';
+      qrBtn.onclick = () => showQR(key);
+      qrBtn.style.marginLeft = '4px';
+      btn.parentElement.appendChild(qrBtn);
+    }
   });
 });
 

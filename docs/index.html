@@ -11,8 +11,18 @@
 </head>
 <body>
   <div class="container">
+
+    <!-- ===== БРЕНД СВЕРХУ (НАД ВСЕМ!) ===== -->
+    <div class="brand">
+      <h1 class="brand-title">
+        <span class="brand-name">Kirdevik</span>
+        <span class="brand-project">VLESS Checker</span>
+        <span class="badge">PRO</span>
+      </h1>
+      <p class="brand-subtitle">Автоматический мониторинг VLESS-ключей из 40+ источников</p>
+    </div>
+
     <header>
-      <h1>🔑 Kirdevik <span class="highlight">VLESS</span> Checker <span class="badge">PRO</span></h1>
       <p class="subtitle" id="updated">Загружаем данные...</p>
     </header>
 
@@ -51,16 +61,16 @@
       </ol>
     </div>
 
-    <!-- ФИЛЬТРЫ — ТЕПЕРЬ ВСЕ ОДИНАКОВОГО РАЗМЕРА! -->
+    <!-- ===== ФИЛЬТРЫ — ВСЕ ОДИНАКОВОГО РАЗМЕРА! ===== -->
     <div class="filters">
-      <select id="protocol-filter" onchange="applyFilters()">
+      <select id="protocol-filter" onchange="applyFilters()" class="filter-select">
         <option value="all">📡 Все протоколы</option>
         <option value="reality">🔒 Reality</option>
         <option value="ws">🌐 WebSocket</option>
         <option value="tcp">🔌 TCP</option>
         <option value="grpc">⚡ gRPC</option>
       </select>
-      <input type="text" id="search-input" placeholder="🔍 Поиск по стране..." oninput="applyFilters()" />
+      <input type="text" id="search-input" placeholder="🔍 Поиск по стране..." oninput="applyFilters()" class="filter-input" />
       <button class="export-btn" onclick="exportKeys()">📥 Экспорт</button>
     </div>
 

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Kirdevik VLESS Checker PRO</title>
-  <meta name="description" content="Бесплатные VLESS-ключи из 40+ источников. 29 стран." />
+  <meta name="description" content="Бесплатные VLESS-ключи из 40+ источников. 30+ стран." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔑</text></svg>" />
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="styles.css" />
@@ -78,7 +78,7 @@
       </div>
     </div>
 
-    <!-- НАСТОЯЩАЯ КАРТА -->
+    <!-- КАРТА -->
     <div class="map-container">
       <h3 class="map-title">🌍 Карта серверов</h3>
       <div id="server-map" style="height:300px;border-radius:8px;background:#0a0a0f;"></div>
@@ -94,65 +94,7 @@
       </ol>
     </div>
 
-    <!-- ФИЛЬТРЫ -->
-    <div class="filters">
-      <select id="country-filter" onchange="applyFilters()" class="filter-select">
-        <option value="all">🌍 Все страны</option>
-        <option value="baltics">🇱🇹🇪🇪🇱🇻 Прибалтика</option>
-        <option value="finland">🇫🇮 Финляндия</option>
-        <option value="germany">🇩🇪 Германия</option>
-        <option value="sweden">🇸🇪 Швеция</option>
-        <option value="netherlands">🇳🇱 Нидерланды</option>
-        <option value="poland">🇵🇱 Польша</option>
-        <option value="france">🇫🇷 Франция</option>
-        <option value="uk">🇬🇧 Великобритания</option>
-        <option value="switzerland">🇨🇭 Швейцария</option>
-        <option value="canada">🇨🇦 Канада</option>
-        <option value="australia">🇦🇺 Австралия</option>
-        <option value="brazil">🇧🇷 Бразилия</option>
-        <option value="india">🇮🇳 Индия</option>
-        <option value="south_africa">🇿🇦 ЮАР</option>
-        <option value="uae">🇦🇪 ОАЭ</option>
-        <option value="japan">🇯🇵 Япония</option>
-        <option value="south_korea">🇰🇷 Корея</option>
-        <option value="singapore">🇸🇬 Сингапур</option>
-        <option value="hong_kong">🇭🇰 Гонконг</option>
-        <option value="spain">🇪🇸 Испания</option>
-        <option value="italy">🇮🇹 Италия</option>
-        <option value="norway">🇳🇴 Норвегия</option>
-        <option value="denmark">🇩🇰 Дания</option>
-        <option value="argentina">🇦🇷 Аргентина</option>
-        <option value="chile">🇨🇱 Чили</option>
-        <option value="mexico">🇲🇽 Мексика</option>
-        <option value="egypt">🇪🇬 Египет</option>
-        <option value="kenya">🇰🇪 Кения</option>
-        <option value="nigeria">🇳🇬 Нигерия</option>
-        <option value="new_zealand">🇳🇿 Новая Зеландия</option>
-      </select>
-      
-      <select id="protocol-filter" onchange="applyFilters()" class="filter-select">
-        <option value="all">📡 Все протоколы</option>
-        <option value="reality">🔒 Reality</option>
-        <option value="ws">🌐 WebSocket</option>
-        <option value="tcp">🔌 TCP</option>
-        <option value="grpc">⚡ gRPC</option>
-      </select>
-      
-      <select id="speed-filter" onchange="applyFilters()" class="filter-select">
-        <option value="all">⚡ Любая скорость</option>
-        <option value="fast">&lt; 100 мс</option>
-        <option value="medium">100-300 мс</option>
-        <option value="slow">&gt; 300 мс</option>
-      </select>
-      
-      <input type="text" id="search-input" placeholder="🔍 Поиск по UUID..." oninput="applyFilters()" class="filter-input" />
-      
-      <button class="export-btn" onclick="exportKeys()">📥 TXT</button>
-      <button class="export-btn" onclick="exportClash()">⚡ Clash</button>
-      <button class="export-btn" onclick="copyAllKeys()">📋 Копировать всё</button>
-    </div>
-
-    <p class="section-label">🌍 Обычный VPN — 29 стран</p>
+    <p class="section-label">🌍 Обычный VPN — 30+ стран</p>
     <div class="tabs" id="tabs-countries">
       <button class="tab" onclick="switchMode('baltics')">🇱🇹🇪🇪🇱🇻 Прибалтика</button>
       <button class="tab" onclick="switchMode('finland')">🇫🇮 Финляндия</button>
@@ -184,14 +126,7 @@
       <button class="tab" onclick="switchMode('kenya')">🇰🇪 Кения</button>
       <button class="tab" onclick="switchMode('nigeria')">🇳🇬 Нигерия</button>
       <button class="tab" onclick="switchMode('new_zealand')">🇳🇿 Новая Зеландия</button>
-      <button class="tab" onclick="switchMode('other')">🌍 Остальные</button>
     </div>
-
-    <button class="collapsed-toggle" id="collapsed-toggle" onclick="toggleCollapsed()">
-      <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4" stroke="#666" stroke-width="1.5"/></svg>
-      <span id="collapsed-label">Нет ключей</span>
-    </button>
-    <div class="tabs-collapsed" id="tabs-collapsed"></div>
 
     <hr class="tabs-divider" />
 
@@ -203,26 +138,19 @@
       <button class="tab" onclick="switchMode('w_sweden')">🇸🇪 Швеция</button>
       <button class="tab" onclick="switchMode('w_netherlands')">🇳🇱 Нидерланды</button>
       <button class="tab" onclick="switchMode('w_poland')">🇵🇱 Польша</button>
-      <button class="tab" onclick="switchMode('w_other')">🌍 Остальные</button>
       <button class="tab" onclick="switchMode('russia')">🇷🇺 Россия (Москва)</button>
     </div>
-
-    <button class="collapsed-toggle" id="collapsed-toggle-white" onclick="toggleCollapsedWhite()">
-      <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 4l4 4 4-4" stroke="#666" stroke-width="1.5"/></svg>
-      <span id="collapsed-label-white">Нет ключей</span>
-    </button>
-    <div class="tabs-collapsed" id="tabs-collapsed-white"></div>
 
     <button class="refresh-btn" onclick="forceUpdate()">🔄 Обновить ключи</button>
 
     <div id="cards"></div>
 
     <footer>
-      <p>⚡ Обновляется каждые 30 минут из 40+ источников • 29 стран</p>
-      <p>📊 <a href="#" onclick="exportKeys();return false;">Экспорт TXT</a> • <a href="#" onclick="exportClash();return false;">Экспорт Clash</a> • <a href="#" onclick="copyAllKeys();return false;">Копировать всё</a></p>
+      <p>⚡ Обновляется каждые 30 минут из 40+ источников • 30+ стран</p>
+      <p>📊 <a href="#" onclick="copyAllKeys();return false;">Копировать всё</a></p>
     </footer>
   </div>
 
-  <script src="script.js?v=8"></script>
+  <script src="script.js?v=10"></script>
 </body>
 </html>

@@ -12,20 +12,24 @@
 <body>
   <div class="container">
 
-    <!-- ===== БРЕНД СВЕРХУ (НАД ВСЕМ!) ===== -->
-    <div class="brand">
-      <h1 class="brand-title">
-        <span class="brand-name">Kirdevik</span>
-        <span class="brand-project">VLESS Checker</span>
-        <span class="badge">PRO</span>
-      </h1>
-      <p class="brand-subtitle">Автоматический мониторинг VLESS-ключей из 40+ источников</p>
-    </div>
+    <!-- ===== БРЕНД СВЕРХУ — КЛИКАБЕЛЬНЫЙ! ===== -->
+    <a href="https://github.com/kirdevik/vless-checker" target="_blank" class="brand-link">
+      <div class="brand">
+        <h1 class="brand-title">
+          <span class="brand-name">Kirdevik</span>
+          <span class="brand-project">VLESS Checker</span>
+          <span class="badge">PRO</span>
+          <span class="live-badge">🟢 Онлайн</span>
+        </h1>
+        <p class="brand-subtitle">Автоматический мониторинг VLESS-ключей из 40+ источников</p>
+      </div>
+    </a>
 
     <header>
       <p class="subtitle" id="updated">Загружаем данные...</p>
     </header>
 
+    <!-- ===== СТАТИСТИКА ===== -->
     <div class="stats-bar">
       <div class="stat-item">
         <span class="stat-value" id="total-sources">0</span>
@@ -42,6 +46,10 @@
       <div class="stat-item">
         <span class="stat-value" id="avg-speed">0</span>
         <span class="stat-label">Средняя скорость</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" id="next-update">--</span>
+        <span class="stat-label">Обновится через</span>
       </div>
     </div>
 
@@ -61,7 +69,7 @@
       </ol>
     </div>
 
-    <!-- ===== ФИЛЬТРЫ — ВСЕ ОДИНАКОВОГО РАЗМЕРА! ===== -->
+    <!-- ===== ФИЛЬТРЫ ===== -->
     <div class="filters">
       <select id="protocol-filter" onchange="applyFilters()" class="filter-select">
         <option value="all">📡 Все протоколы</option>
@@ -70,8 +78,9 @@
         <option value="tcp">🔌 TCP</option>
         <option value="grpc">⚡ gRPC</option>
       </select>
-      <input type="text" id="search-input" placeholder="🔍 Поиск по стране..." oninput="applyFilters()" class="filter-input" />
+      <input type="text" id="search-input" placeholder="🔍 Поиск по стране или UUID..." oninput="applyFilters()" class="filter-input" />
       <button class="export-btn" onclick="exportKeys()">📥 Экспорт</button>
+      <button class="export-btn" onclick="copyAllKeys()">📋 Копировать всё</button>
     </div>
 
     <p class="section-label">🌍 Обычный VPN — 15 стран</p>
@@ -120,16 +129,16 @@
     </button>
     <div class="tabs-collapsed" id="tabs-collapsed-white"></div>
 
-    <button class="refresh-btn" onclick="loadData()">🔄 Обновить</button>
+    <button class="refresh-btn" onclick="forceUpdate()">🔄 Обновить всё</button>
 
     <div id="cards"></div>
 
     <footer>
       <p>⚡ Обновляется каждые 30 минут из 40+ источников</p>
-      <p>📊 <a href="#" onclick="exportKeys();return false;">Экспорт всех ключей</a></p>
+      <p>📊 <a href="#" onclick="exportKeys();return false;">Экспорт всех ключей</a> • <a href="#" onclick="copyAllKeys();return false;">Копировать всё</a></p>
     </footer>
   </div>
 
-  <script src="script.js?v=3"></script>
+  <script src="script.js?v=4"></script>
 </body>
 </html>

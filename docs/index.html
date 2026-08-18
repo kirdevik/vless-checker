@@ -16,16 +16,19 @@
       <p class="subtitle" id="updated">Загружаем данные...</p>
     </header>
 
+    <!-- СТАТИСТИКА -->
     <div class="stats-bar">
       <div class="stat-item"><span class="stat-value" id="total-sources">0</span><span class="stat-label">Источников</span></div>
       <div class="stat-item"><span class="stat-value" id="total-keys">0</span><span class="stat-label">Всего ключей</span></div>
       <div class="stat-item"><span class="stat-value" id="working-keys">0</span><span class="stat-label">Рабочих</span></div>
+      <div class="stat-item"><span class="stat-value" id="avg-speed">0</span><span class="stat-label">Средняя скорость</span></div>
     </div>
 
     <div class="github-link">
       <a href="https://github.com/kirdevik/vless-checker" target="_blank">kirdevik/vless-checker</a>
     </div>
 
+    <!-- ГИД -->
     <div class="guide">
       <h3>⚡ Как пользоваться</h3>
       <ol>
@@ -33,6 +36,19 @@
         <li>Нажми <span>Копировать</span> и вставь ключ в приложение.</li>
         <li>Ключи обновляются <span>каждые 30 минут</span>.</li>
       </ol>
+    </div>
+
+    <!-- ФИЛЬТРЫ -->
+    <div class="filters">
+      <select id="protocol-filter" onchange="applyFilters()">
+        <option value="all">Все протоколы</option>
+        <option value="reality">Reality</option>
+        <option value="ws">WebSocket</option>
+        <option value="tcp">TCP</option>
+        <option value="grpc">gRPC</option>
+      </select>
+      <input type="text" id="search-input" placeholder="🔍 Поиск по стране..." oninput="applyFilters()" />
+      <button class="export-btn" onclick="exportKeys()">📥 Экспорт</button>
     </div>
 
     <p class="section-label">🌍 Обычный VPN — 15 стран</p>
@@ -75,7 +91,10 @@
 
     <button class="refresh-btn" onclick="loadData()">🔄 Обновить</button>
     <div id="cards"></div>
-    <footer><p>⚡ Обновляется каждые 30 минут из 100+ источников</p></footer>
+    <footer>
+      <p>⚡ Обновляется каждые 30 минут из 100+ источников</p>
+      <p>📊 <a href="#" onclick="exportKeys();return false;">Экспорт всех ключей</a></p>
+    </footer>
   </div>
   <script src="script.js?v=3"></script>
 </body>
